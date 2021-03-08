@@ -10,8 +10,8 @@ import (
 // Session type
 type Session struct {
 	ID        string     `gorm:"type:varchar(40);column:id;primary_key;"`
-	Key       string     `gorm:"type:varchar(40);column:key;"`
-	Value     string     `gorm:"type:longtext;column:value;"`
+	Key       string     `gorm:"type:varchar(40);column:session_key;"`
+	Value     string     `gorm:"type:longtext;column:session_value;"`
 	ExpiresAt *time.Time `gorm:"type:datetime;olumn:expores_at;DEFAULT NULL;"`
 	CreatedAt time.Time  `gorm:"type:datetime;column:created_at;DEFAULT NULL;"`
 	UpdatedAt time.Time  `gorm:"type:datetime;column:updated_at;DEFAULT NULL;"`
