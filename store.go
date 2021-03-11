@@ -16,10 +16,18 @@ type Store struct {
 	sessionTableName string
 	db               *gorm.DB
 	timeoutSeconds   int
+	automigrateEnabled bool
 }
 
 // StoreOption options for the session store
 type StoreOption func(*Store)
+
+// WithAutoMigrate sets the table name for the cache store
+func WithAutoMigrate(automigrateEnabled bool) StoreOption {
+	return func(s *Store) {
+		s.automigrateEnabled = automigrateEnabled
+	}
+}
 
 // WithDriverAndDNS sets the driver and the DNS for the database for the cache store
 func WithDriverAndDNS(driverName string, dsn string) StoreOption {
@@ -61,9 +69,16 @@ func NewStore(opts ...StoreOption) *Store {
 
 	store.timeoutSeconds = 2 * 60 * 60 // 2 hours
 
-	store.db.Table(store.sessionTableName).AutoMigrate(&Session{})
+	if store.automigrateEnabled == true {
+		store.AutoMigrate()
+	}
 
 	return store
+}
+
+// AutoMigrate auto migrate
+func (st *Store) AutoMigrate() {
+	st.db.Table(st.logTableName).AutoMigrate(&Session{})
 }
 
 // ExpireSessionGoroutine - soft deletes expired cache
