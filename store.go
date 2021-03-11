@@ -78,7 +78,7 @@ func NewStore(opts ...StoreOption) *Store {
 
 // AutoMigrate auto migrate
 func (st *Store) AutoMigrate() {
-	st.db.Table(st.logTableName).AutoMigrate(&Session{})
+	st.db.Table(st.sessionTableName).AutoMigrate(&Session{})
 }
 
 // ExpireSessionGoroutine - soft deletes expired cache
