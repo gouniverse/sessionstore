@@ -9,13 +9,13 @@ import (
 
 // Session type
 type Session struct {
-	ID        string     `gorm:"type:varchar(40);column:id;primary_key;"`
-	Key       string     `gorm:"type:varchar(40);column:session_key;"`
-	Value     string     `gorm:"type:longtext;column:session_value;"`
-	ExpiresAt *time.Time `gorm:"type:datetime;olumn:expores_at;DEFAULT NULL;"`
-	CreatedAt time.Time  `gorm:"type:datetime;column:created_at;DEFAULT NULL;"`
-	UpdatedAt time.Time  `gorm:"type:datetime;column:updated_at;DEFAULT NULL;"`
-	DeletedAt *time.Time `gorm:"type:datetime;olumn:deleted_at;DEFAULT NULL;"`
+	ID        string     `db:"id"; gorm:"type:varchar(40);column:id;primary_key;"`
+	Key       string     `db:"session_key"; gorm:"type:varchar(40);column:session_key;"`
+	Value     string     `db:"session_value"; gorm:"type:longtext;column:session_value;"`
+	ExpiresAt *time.Time `db:"expires_at"; gorm:"type:datetime;olumn:expores_at;DEFAULT NULL;"`
+	CreatedAt time.Time  `db:"created_at"; gorm:"type:datetime;column:created_at;DEFAULT NULL;"`
+	UpdatedAt time.Time  `db:"updated_at"; gorm:"type:datetime;column:updated_at;DEFAULT NULL;"`
+	DeletedAt *time.Time `db:"deleted_at"; gorm:"type:datetime;olumn:deleted_at;DEFAULT NULL;"`
 }
 
 // BeforeCreate adds UID to model

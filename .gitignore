@@ -13,3 +13,9 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+test_session_automigrate.db
+test_session_debug.db
+test_session_delete.db
+test_session_set_key.db
+test_session_store_create.db
+test_session_update_key.db
