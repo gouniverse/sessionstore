@@ -69,25 +69,29 @@ func TestStoreAutomigrate(t *testing.T) {
 	}
 }
 
-// func TestStoreSessionKeyRemove(t *testing.T) {
-// 	db := InitDB("test_session_delete.db")
+func TestSessionDelete(t *testing.T) {
+	db := InitDB("test_session_delete.db")
 
-// 	store, _ := NewStore(WithDb(db), WithTableName("session"), WithAutoMigrate(true))
+	store, _ := NewStore(WithDb(db), WithTableName("session"), WithAutoMigrate(true))
 
-// 	isRemoved, err := store.RemoveKey("post", "key1")
+	sessionKey := "SESSION_KEY_DELETE"
 
-// 	if err != nil {
-// 		t.Fatalf("Session could not be removed: " + err.Error())
-// 	}
+	store.Set(sessionKey, "123456", 5)
 
-// 	if !isRemoved {
-// 		t.Fatalf("Session remove key should return true on success")
-// 	}
+	isDeleted, err := store.Delete(sessionKey)
 
-// 	if store.FindBySessionKey("post") != nil {
-// 		t.Fatalf("Cache should no longer be present")
-// 	}
-// }
+	if err != nil {
+		t.Fatalf("Session could not be deleted: " + err.Error())
+	}
+
+	if !isDeleted {
+		t.Fatalf("Session remove key should return true on success")
+	}
+
+	if store.FindByKey(sessionKey) != nil {
+		t.Fatalf("Session should no longer be present")
+	}
+}
 
 func TestStoreEnableDebug(t *testing.T) {
 	db := InitDB("test_session_debug.db")

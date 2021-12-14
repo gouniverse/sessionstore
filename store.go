@@ -15,7 +15,6 @@ import (
 	_ "github.com/doug-martin/goqu/v9/dialect/postgres"  // importing postgres dialect
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"   // importing sqlite3 dialect
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlserver" // importing sqlserver dialect
-	"github.com/emirpasic/gods/maps/hashmap"
 	"github.com/georgysavva/scany/sqlscan"
 	"github.com/gouniverse/uid"
 )
@@ -161,22 +160,30 @@ func (st *Store) ExpireSessionGoroutine() error {
 	}
 }
 
-// // SessionDelete removes all keys from the sessiom
-// func SessionDelete(sessionKey string) bool {
-// 	session := SessionFindByToken(sessionKey)
+// Delete deletes a session
+func (st *Store) Delete(sessionKey string) (bool, error) {
+	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).From(st.sessionTableName).Where(goqu.C("session_key").Eq(sessionKey)).Delete().ToSQL()
 
-// 	if session == nil {
-// 		return true
-// 	}
+	if st.debug {
+		log.Println(sqlStr)
+	}
 
-// 	GetDb().Delete(&session)
+	_, err := st.db.Exec(sqlStr)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, err
+		}
 
-// 	return true
-// }
+		return false, err
+	}
+
+	return true, nil
+}
 
 // FindByKey finds a session by key
 func (st *Store) FindByKey(sessionKey string) *Session {
-	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).From(st.sessionTableName).Where(goqu.C("session_key").Eq(sessionKey), goqu.C("deleted_at").IsNull()).Select("*").ToSQL()
+	// key exists, expires is < now, deleted null
+	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).From(st.sessionTableName).Where(goqu.C("session_key").Eq(sessionKey), goqu.C("expires_at").Gt(time.Now()), goqu.C("deleted_at").IsNull()).Select("*").ToSQL()
 
 	if st.debug {
 		log.Println(sqlStr)
@@ -206,11 +213,6 @@ func (st *Store) Get(sessionKey string, valueDefault string) string {
 
 	return valueDefault
 }
-
-// Start starts a session with a specified key
-// func (st *Store) Start(sessionKey string) (bool, error) {
-// 	return st.Set(sessionKey, "{}", st.timeoutSeconds)
-// }
 
 // Set sets a key in store
 func (st *Store) Set(sessionKey string, value string, seconds int64) (bool, error) {
@@ -272,37 +274,37 @@ func (st *Store) Set(sessionKey string, value string, seconds int64) (bool, erro
 // }
 
 // Empty removes all keys from the sessiom
-func (st *Store) Empty(sessionKey string) (bool, error) {
-	session := st.FindByKey(sessionKey)
+// func (st *Store) Empty(sessionKey string) (bool, error) {
+// 	session := st.FindByKey(sessionKey)
 
-	kv := hashmap.New()
+// 	kv := hashmap.New()
 
-	if session == nil {
-		return true, nil
-	}
+// 	if session == nil {
+// 		return true, nil
+// 	}
 
-	json, err := kv.ToJSON()
+// 	json, err := kv.ToJSON()
 
-	if err != nil {
-		return false, err
-	}
+// 	if err != nil {
+// 		return false, err
+// 	}
 
-	session.Value = string(json)
+// 	session.Value = string(json)
 
-	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).Update(st.sessionTableName).Set(session).ToSQL()
+// 	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).Update(st.sessionTableName).Set(session).ToSQL()
 
-	if st.debug {
-		log.Println(sqlStr)
-	}
+// 	if st.debug {
+// 		log.Println(sqlStr)
+// 	}
 
-	_, errExec := st.db.Exec(sqlStr)
+// 	_, errExec := st.db.Exec(sqlStr)
 
-	if errExec != nil {
-		return false, errExec
-	}
+// 	if errExec != nil {
+// 		return false, errExec
+// 	}
 
-	return true, nil
-}
+// 	return true, nil
+// }
 
 // SetKey sets a single key into sessiom
 // func (st *Store) SetKey(sessionKey string, key string, value string) (bool, error) {
