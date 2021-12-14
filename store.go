@@ -25,7 +25,7 @@ type Store struct {
 	sessionTableName   string
 	db                 *sql.DB
 	dbDriverName       string
-	timeoutSeconds     int
+	timeoutSeconds     int64
 	automigrateEnabled bool
 	debug              bool
 }
@@ -175,8 +175,8 @@ func (st *Store) ExpireSessionGoroutine() error {
 // }
 
 // FindByKey finds a session by key
-func (st *Store) FindByKey(key string) *Session {
-	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).From(st.sessionTableName).Where(goqu.C("session_key").Eq(key), goqu.C("deleted_at").IsNull()).Select("*").ToSQL()
+func (st *Store) FindByKey(sessionKey string) *Session {
+	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).From(st.sessionTableName).Where(goqu.C("session_key").Eq(sessionKey), goqu.C("deleted_at").IsNull()).Select("*").ToSQL()
 
 	if st.debug {
 		log.Println(sqlStr)
@@ -196,9 +196,9 @@ func (st *Store) FindByKey(key string) *Session {
 	return &session
 }
 
-// Get a key from session
-func (st *Store) Get(key string, valueDefault string) string {
-	session := st.FindByKey(key)
+// Get a session value
+func (st *Store) Get(sessionKey string, valueDefault string) string {
+	session := st.FindByKey(sessionKey)
 
 	if session != nil {
 		return session.Value
@@ -208,40 +208,13 @@ func (st *Store) Get(key string, valueDefault string) string {
 }
 
 // Start starts a session with a specified key
-func (st *Store) Start(key string) (bool, error) {
-	session := st.FindByKey(key)
-	expiresAt := time.Now().Add(time.Duration(st.timeoutSeconds) * time.Second)
-
-	if session != nil {
-		return true, nil
-	}
-
-	var newSession = Session{
-		ID:        uid.MicroUid(),
-		Key:       key,
-		Value:     "{}",
-		ExpiresAt: &expiresAt,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).Insert(st.sessionTableName).Rows(newSession).ToSQL()
-
-	if st.debug {
-		log.Println(sqlStr)
-	}
-
-	_, err := st.db.Exec(sqlStr)
-
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
-}
+// func (st *Store) Start(sessionKey string) (bool, error) {
+// 	return st.Set(sessionKey, "{}", st.timeoutSeconds)
+// }
 
 // Set sets a key in store
-func (st *Store) Set(key string, value string, seconds int64) (bool, error) {
-	session := st.FindByKey(key)
+func (st *Store) Set(sessionKey string, value string, seconds int64) (bool, error) {
+	session := st.FindByKey(sessionKey)
 
 	expiresAt := time.Now().Add(time.Second * time.Duration(seconds))
 
@@ -249,7 +222,7 @@ func (st *Store) Set(key string, value string, seconds int64) (bool, error) {
 	if session == nil {
 		var newSession = Session{
 			ID:        uid.MicroUid(),
-			Key:       key,
+			Key:       sessionKey,
 			Value:     value,
 			ExpiresAt: &expiresAt,
 			CreatedAt: time.Now(),
@@ -331,93 +304,81 @@ func (st *Store) Empty(sessionKey string) (bool, error) {
 	return true, nil
 }
 
-// SetKey gets a key from sessiom
-func (st *Store) SetKey(sessionKey string, key string, value string) (bool, error) {
-	session := st.FindByKey(sessionKey)
+// SetKey sets a single key into sessiom
+// func (st *Store) SetKey(sessionKey string, key string, value string) (bool, error) {
+// 	session := st.FindBySessionKey(sessionKey)
 
-	kv := hashmap.New()
+// 	kv := hashmap.New()
 
-	if session == nil {
-		isOk, err := st.Set(sessionKey, "{}", 2000)
-		if isOk == false {
-			return false, err
-		}
-		session = st.FindByKey(sessionKey)
-	}
+// 	if session == nil {
+// 		isOk, err := st.Set(sessionKey, "{}", 2000)
+// 		if isOk == false {
+// 			return false, err
+// 		}
+// 		session = st.FindBySessionKey(sessionKey)
+// 	}
 
-	log.Println(value)
+// 	log.Println(value)
 
-	err := kv.FromJSON([]byte(session.Value))
-	if err != nil {
-		return false, err
-	}
+// 	err := kv.FromJSON([]byte(session.Value))
+// 	if err != nil {
+// 		return false, err
+// 	}
 
-	kv.Put(key, value)
-	json, err := kv.ToJSON()
+// 	kv.Put(key, value)
+// 	json, err := kv.ToJSON()
 
-	if err != nil {
-		return false, err
-	}
-	log.Println(string(json))
+// 	if err != nil {
+// 		return false, err
+// 	}
 
-	session.Value = string(json)
+// 	session.Value = string(json)
 
-	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).Update(st.sessionTableName).Set(session).ToSQL()
-
-	if st.debug {
-		log.Println(sqlStr)
-	}
-
-	_, errExec := st.db.Exec(sqlStr)
-
-	if errExec != nil {
-		return false, errExec
-	}
-
-	return true, nil
-}
+// 	seconds := session.ExpiresAt.Unix() - time.Now().Unix()
+// 	return st.Set(sessionKey, string(json), seconds)
+// }
 
 // RemoveKey removes a key from sessiom
-func (st *Store) RemoveKey(sessionKey string, key string) (bool, error) {
-	session := st.FindByKey(sessionKey)
+// func (st *Store) RemoveKey(sessionKey string, key string) (bool, error) {
+// 	session := st.FindBySessionKey(sessionKey)
 
-	kv := hashmap.New()
+// 	kv := hashmap.New()
 
-	if session == nil {
-		return true, nil
-	}
+// 	if session == nil {
+// 		return true, nil
+// 	}
 
-	err := kv.FromJSON([]byte(session.Value))
-	if err != nil {
-		return false, err
-	}
+// 	err := kv.FromJSON([]byte(session.Value))
+// 	if err != nil {
+// 		return false, err
+// 	}
 
-	kv.Remove(key)
+// 	kv.Remove(key)
 
-	json, err := kv.ToJSON()
+// 	json, err := kv.ToJSON()
 
-	if err != nil {
-		return false, err
-	}
+// 	if err != nil {
+// 		return false, err
+// 	}
 
-	log.Println(string(json))
+// 	log.Println(string(json))
 
-	session.Value = string(json)
+// 	session.Value = string(json)
 
-	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).Update(st.sessionTableName).Set(session).ToSQL()
+// 	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).Update(st.sessionTableName).Set(session).ToSQL()
 
-	if st.debug {
-		log.Println(sqlStr)
-	}
+// 	if st.debug {
+// 		log.Println(sqlStr)
+// 	}
 
-	_, errExec := st.db.Exec(sqlStr)
+// 	_, errExec := st.db.Exec(sqlStr)
 
-	if errExec != nil {
-		return false, errExec
-	}
+// 	if errExec != nil {
+// 		return false, errExec
+// 	}
 
-	return true, nil
-}
+// 	return true, nil
+// }
 
 // SQLCreateTable returns a SQL string for creating the cache table
 func (st *Store) SQLCreateTable() string {
