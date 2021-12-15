@@ -52,16 +52,32 @@ value := map[string]string{
   "key2": "value2",
   "key3": "value3",
 }
-isSaved, err := store.SetJSON("mykey", value, 5)
+isSaved, err := store.SetJSON("mykey", value, 5*60)
 
 if !isSaved {
-  t.Fatalf("Set JSON failed: " + err.Error())
+  log.Fatal("Set JSON failed: " + err.Error())
 }
+
+result, err := store.GetJSON("mykey", "{}")
+
+if err != nil {
+  log.Fatal("Get JSON failed: " + err.Error())
+}
+
+var res = map[string]string{}
+for k, v := range result.(map[string]interface{}) {
+  res[k] = v.(string)
+}
+
+log.Printls(res["key1"])
 ```
 
 
 
 ## Changelog
+2021.12.15 - Added LICENSE
+
+2021.12.15 - Added test badge
 
 2021.12.15 - Added SetJSON GetJSON
 
