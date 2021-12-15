@@ -219,7 +219,7 @@ func TestSetGetJSOM(t *testing.T) {
 		t.Fatalf("Key2 not correct: " + res["key2"])
 	}
 
-	if res["key3"] != value["key1"] {
+	if res["key3"] != value["key3"] {
 		t.Fatalf("Key3 not correct: " + res["key3"])
 	}
 }
