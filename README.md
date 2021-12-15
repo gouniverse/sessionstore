@@ -1,5 +1,9 @@
 # Session Store
 
+[![Tests Status](https://github.com/gouniverse/cachestore/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/gouniverse/sessionstore/actions/workflows/test.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gouniverse/cachestore)](https://goreportcard.com/report/github.com/gouniverse/sessionstore)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/gouniverse/cachestore)](https://pkg.go.dev/github.com/gouniverse/sessionstore)
+
 Stores session to a database table.
 
 ## Installation
@@ -25,8 +29,23 @@ sessionExpireSeconds = 2*60*60
 sessionStore.Set(sessionKey, sessionValue, sessionExpireSeconds)
 
 // Get session value, or default if not found
-sessionValue := sessionStore.Get(sessionKey, defaultValue)
+value := sessionStore.Get(sessionKey, defaultValue)
+
+// Delete session
+isDeleted, err := sessionStore.Delete(sessionKey)
 ```
+
+
+
+```
+// Store JSON value
+sessionStore.SetJSON(sessionKey, sessionValue, sessionExpireSeconds)
+
+// Get JSON value
+value := sessionStore.GetJSON(sessionKey, defaultValue)
+```
+
+
 
 ## Changelog
 
