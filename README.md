@@ -30,6 +30,8 @@ sessionValue := sessionStore.Get(sessionKey, defaultValue)
 
 ## Changelog
 
+2021.12.15 - Added SetJSON GetJSON
+
 2021.12.14 - Added support for DB dialects
 
 2021.12.14 - Removed GORM dependency and moved to the standard library

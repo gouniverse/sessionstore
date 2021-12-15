@@ -179,3 +179,47 @@ func TestUpdateKey(t *testing.T) {
 		t.Fatalf("Updated at should more than 1 second after created at date: " + session2.UpdatedAt.Format(time.UnixDate) + " - " + session1.CreatedAt.Format(time.UnixDate))
 	}
 }
+
+func TestSetGetJSOM(t *testing.T) {
+	db := InitDB("test_session_json.db")
+
+	store, _ := NewStore(WithDb(db), WithTableName("session_json"), WithAutoMigrate(true))
+
+	value := map[string]string{
+		"key1": "value1",
+		"key2": "value2",
+		"key3": "value3",
+	}
+	isSaved, err := store.SetJSON("mykey", value, 5)
+
+	if err != nil {
+		t.Fatalf("Set JSON failed: " + err.Error())
+	}
+
+	if !isSaved {
+		t.Fatalf("Set JSON failed: " + err.Error())
+	}
+
+	result, err := store.GetJSON("mykey", "{}")
+
+	if err != nil {
+		t.Fatalf("Get JSON failed: " + err.Error())
+	}
+
+	var res = map[string]string{}
+	for k, v := range result.(map[string]interface{}) {
+		res[k] = v.(string)
+	}
+
+	if res["key1"] != value["key1"] {
+		t.Fatalf("Key1 not correct: " + res["key1"])
+	}
+
+	if res["key2"] != value["key2"] {
+		t.Fatalf("Key2 not correct: " + res["key2"])
+	}
+
+	if res["key3"] != value["key1"] {
+		t.Fatalf("Key3 not correct: " + res["key3"])
+	}
+}

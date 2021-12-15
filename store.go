@@ -3,6 +3,7 @@ package sessionstore
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -203,7 +204,7 @@ func (st *Store) FindByKey(sessionKey string) *Session {
 	return &session
 }
 
-// Get a session value
+// Gets the session value as a string
 func (st *Store) Get(sessionKey string, valueDefault string) string {
 	session := st.FindByKey(sessionKey)
 
@@ -212,6 +213,24 @@ func (st *Store) Get(sessionKey string, valueDefault string) string {
 	}
 
 	return valueDefault
+}
+
+// GetJSON attemots to parse the value as JSON, use with SetJSON
+func (st *Store) GetJSON(key string, valueDefault interface{}) (interface{}, error) {
+	session := st.FindByKey(key)
+
+	if session != nil {
+		jsonValue := session.Value
+		var e interface{}
+		jsonError := json.Unmarshal([]byte(jsonValue), &e)
+		if jsonError != nil {
+			return valueDefault, jsonError
+		}
+
+		return e, nil
+	}
+
+	return valueDefault, nil
 }
 
 // Set sets a key in store
@@ -249,6 +268,16 @@ func (st *Store) Set(sessionKey string, value string, seconds int64) (bool, erro
 	}
 
 	return true, nil
+}
+
+// SetJSON convenience method which saves the supplied value as JSON, use GetJSON to extract
+func (st *Store) SetJSON(key string, value interface{}, seconds int64) (bool, error) {
+	jsonValue, jsonError := json.Marshal(value)
+	if jsonError != nil {
+		return false, jsonError
+	}
+
+	return st.Set(key, string(jsonValue), seconds)
 }
 
 // // SessionGetKey gets a key from sessiom
