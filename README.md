@@ -43,6 +43,20 @@ sessionStore.SetJSON(sessionKey, sessionValue, sessionExpireSeconds)
 
 // Get JSON value
 value := sessionStore.GetJSON(sessionKey, defaultValue)
+
+
+
+// Example
+value := map[string]string{
+  "key1": "value1",
+  "key2": "value2",
+  "key3": "value3",
+}
+isSaved, err := store.SetJSON("mykey", value, 5)
+
+if !isSaved {
+  t.Fatalf("Set JSON failed: " + err.Error())
+}
 ```
 
 
