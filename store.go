@@ -48,25 +48,12 @@ func WithDb(db *sql.DB) StoreOption {
 	}
 }
 
-// WithDriverAndDNS sets the driver and the DNS for the database for the cache store
-// func WithDriverAndDNS(driverName string, dsn string) StoreOption {
-// 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
-
-// 	if err != nil {
-// 		panic("failed to connect database")
-// 	}
-
-// 	return func(s *Store) {
-// 		s.db = db
-// 	}
-// }
-
-// WithGormDb sets the GORM database for the session store
-// func WithGormDb(db *gorm.DB) StoreOption {
-// 	return func(s *Store) {
-// 		s.db = db
-// 	}
-// }
+// WithDebug prints the SQL queries
+func WithDebug(debug bool) StoreOption {
+	return func(s *Store) {
+		s.debug = debug
+	}
+}
 
 // WithTableName sets the table name for the session store
 func WithTableName(sessionTableName string) StoreOption {
