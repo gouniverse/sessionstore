@@ -220,6 +220,33 @@ func (st *Store) GetJSON(key string, valueDefault interface{}) (interface{}, err
 	return valueDefault, nil
 }
 
+// Has finds if a session by key exists
+func (st *Store) Has(sessionKey string) (bool, error) {
+	// key exists, expires is < now, deleted null
+	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).From(st.sessionTableName).Where(goqu.C("session_key").Eq(sessionKey), goqu.C("expires_at").Gt(time.Now()), goqu.C("deleted_at").IsNull()).Select(goqu.COUNT("*")).As("count").ToSQL()
+
+	if st.debug {
+		log.Println(sqlStr)
+	}
+
+	var count int
+	err := sqlscan.Get(context.Background(), st.db, &count, sqlStr)
+
+	if err != nil {
+		if err.Error() == sql.ErrNoRows.Error() {
+			return false, nil
+		}
+		log.Fatal("Failed to execute query: ", err)
+		return false, err
+	}
+
+	if count > 0 {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 // Set sets a key in store
 func (st *Store) Set(sessionKey string, value string, seconds int64) (bool, error) {
 	session := st.FindByKey(sessionKey)

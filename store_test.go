@@ -223,3 +223,39 @@ func TestSetGetJSOM(t *testing.T) {
 		t.Fatalf("Key3 not correct: " + res["key3"])
 	}
 }
+
+func TestHas(t *testing.T) {
+	db := InitDB("test_session_has.db")
+
+	store, _ := NewStore(WithDb(db), WithTableName("session_json"), WithAutoMigrate(true))
+
+	hasNo, err := store.Has("mykey")
+
+	if err != nil {
+		t.Fatalf("Has no failed: " + err.Error())
+	}
+
+	if hasNo {
+		t.Fatalf("Has no failed: " + err.Error())
+	}
+
+	isSaved, err := store.Set("mykey", "test", 5)
+
+	if err != nil {
+		t.Fatalf("Set failed: " + err.Error())
+	}
+
+	if !isSaved {
+		t.Fatalf("Set failed: " + err.Error())
+	}
+
+	has, err := store.Has("mykey")
+
+	if err != nil {
+		t.Fatalf("Has failed: " + err.Error())
+	}
+
+	if !has {
+		t.Fatalf("Has failed: " + err.Error())
+	}
+}

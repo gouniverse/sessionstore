@@ -75,6 +75,9 @@ log.Printls(res["key1"])
 
 
 ## Changelog
+
+2022.01.01 - Added "Has" methos
+
 2021.12.15 - Added LICENSE
 
 2021.12.15 - Added test badge
