@@ -265,9 +265,10 @@ func (st *Store) Set(sessionKey string, value string, seconds int64) (bool, erro
 		}
 		sqlStr, _, _ = goqu.Dialect(st.dbDriverName).Insert(st.sessionTableName).Rows(newSession).ToSQL()
 	} else {
-		session.Value = value
-		session.ExpiresAt = &expiresAt
-		session.UpdatedAt = time.Now()
+		fields := map[string]interface{}{}
+		fields["session_value"] = value
+		fields["expires_at"] = &expiresAt
+		fields["updated_at"] = time.Now()
 		sqlStr, _, _ = goqu.Dialect(st.dbDriverName).Update(st.sessionTableName).Set(session).ToSQL()
 	}
 
