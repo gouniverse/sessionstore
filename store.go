@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"reflect"
 	"strings"
@@ -128,7 +127,9 @@ func (st *Store) ExpireSessionGoroutine() error {
 	i := 0
 	for {
 		i++
-		fmt.Println("Cleaning expired sessions...")
+		if st.debug {
+			log.Println("Cleaning expired sessions...")
+		}
 		sqlStr, _, _ := goqu.Dialect(st.dbDriverName).From(st.sessionTableName).Where(goqu.C("expires_at").Lt(time.Now())).Delete().ToSQL()
 
 		if st.debug {
