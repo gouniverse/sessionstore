@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/gouniverse/uid"
-	"gorm.io/gorm"
 )
 
 // Session type
@@ -16,13 +15,6 @@ type Session struct {
 	CreatedAt time.Time  `db:"created_at"`    // datettime NOT NULL
 	UpdatedAt time.Time  `db:"updated_at"`    // datettime NOT NULL
 	DeletedAt *time.Time `db:"deleted_at"`    // datettime DEFAULT NULL
-}
-
-// BeforeCreate adds UID to model
-func (c *Session) BeforeCreate(tx *gorm.DB) (err error) {
-	uuid := uid.NanoUid()
-	c.ID = uuid
-	return nil
 }
 
 // // SessionDelete removes all keys from the sessiom
