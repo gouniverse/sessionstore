@@ -2,8 +2,6 @@ package sessionstore
 
 import (
 	"time"
-
-	"github.com/gouniverse/uid"
 )
 
 // Session type
