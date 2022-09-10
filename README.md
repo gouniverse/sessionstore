@@ -76,7 +76,7 @@ log.Printls(res["key1"])
 
 ## Changelog
 
-2022.01.01 - Added "Has" methos
+2022.01.01 - Added "Has" method
 
 2021.12.15 - Added LICENSE
 
