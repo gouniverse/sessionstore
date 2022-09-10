@@ -139,9 +139,13 @@ func (st *Store) ExpireSessionGoroutine() error {
 		_, err := st.db.Exec(sqlStr)
 		if err != nil {
 			if err == sql.ErrNoRows {
+				// Looks like this is now outdated for sqlscan
 				return nil
 			}
-			log.Fatal("Failed to execute query: ", err)
+			if sqlscan.NotFound(err) {
+				return nil
+			}
+			log.Println("Cache Store. ExpireSessionGoroutine. Error: ", err)
 			return nil
 		}
 
@@ -160,7 +164,12 @@ func (st *Store) Delete(sessionKey string) (bool, error) {
 	_, err := st.db.Exec(sqlStr)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return false, err
+			// Looks like this is now outdated for sqlscan
+			return false, nil
+		}
+
+		if sqlscan.NotFound(err) {
+			return false, nil
 		}
 
 		return false, err
@@ -182,10 +191,14 @@ func (st *Store) FindByKey(sessionKey string) *Session {
 	err := sqlscan.Get(context.Background(), st.db, &session, sqlStr)
 
 	if err != nil {
-		if err.Error() == sql.ErrNoRows.Error() {
+		if err == sql.ErrNoRows {
+			// Looks like this is now outdated for sqlscan
 			return nil
 		}
-		log.Fatal("Failed to execute query: ", err)
+		if sqlscan.NotFound(err) {
+			return nil
+		}
+		log.Println("CacheStore. FindBykey. Error: ", err)
 		return nil
 	}
 
@@ -234,10 +247,14 @@ func (st *Store) Has(sessionKey string) (bool, error) {
 	err := sqlscan.Get(context.Background(), st.db, &count, sqlStr)
 
 	if err != nil {
-		if err.Error() == sql.ErrNoRows.Error() {
+		if err == sql.ErrNoRows {
+			// Looks like this is now outdated for sqlscan
 			return false, nil
 		}
-		log.Fatal("Failed to execute query: ", err)
+		if sqlscan.NotFound(err) {
+			return false, nil
+		}
+		log.Println("CacheStore. Error: ", err)
 		return false, err
 	}
 
