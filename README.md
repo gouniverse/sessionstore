@@ -17,6 +17,7 @@ go get -u github.com/gouniverse/sessionstore
 sessionStore = sessionstore.NewStore(sessionstore.NewStoreOptions{
 	DB:                 databaseInstance,
 	SessionTableName:   "my_session",
+	TimeoutSeconds:     3600, // 1 hour
 	AutomigrateEnabled: true,
 	DebugEnabled:       false,
 })
