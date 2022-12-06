@@ -26,7 +26,12 @@ func InitDB(filepath string) *sql.DB {
 func TestStoreCreate(t *testing.T) {
 	db := InitDB("test_session_store_create.db")
 
-	store, err := NewStore(WithDb(db), WithTableName("session_create"), WithAutoMigrate(true))
+	store, err := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_create",
+		AutomigrateEnabled: true,
+		//DebugEnabled:       true,
+	})
 
 	if err != nil {
 		t.Fatalf("Store could not be created: " + err.Error())
@@ -36,21 +41,21 @@ func TestStoreCreate(t *testing.T) {
 		t.Fatalf("Store could not be created")
 	}
 
-	isOk, err := store.Set("post", "1234567890", 5)
+	errSet := store.Set("post", "1234567890", 5)
 
-	if err != nil {
+	if errSet != nil {
 		t.Fatalf("Cache could not be created: " + err.Error())
-	}
-
-	if isOk == false {
-		t.Fatalf("Cache could not be created")
 	}
 }
 
 func TestStoreAutomigrate(t *testing.T) {
 	db := InitDB("test_session_automigrate.db")
 
-	store, _ := NewStore(WithDb(db), WithTableName("session_automigrate"))
+	store, _ := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_automigrate",
+		AutomigrateEnabled: true,
+	})
 
 	err := store.AutoMigrate()
 
@@ -58,21 +63,21 @@ func TestStoreAutomigrate(t *testing.T) {
 		t.Fatalf("Automigrate failed: " + err.Error())
 	}
 
-	isOk, err := store.Set("post", "1234567890", 5)
+	errSet := store.Set("post", "1234567890", 5)
 
-	if err != nil {
+	if errSet != nil {
 		t.Fatalf("Session could not be created: " + err.Error())
-	}
-
-	if isOk == false {
-		t.Fatalf("Session could not be created")
 	}
 }
 
 func TestSessionDelete(t *testing.T) {
 	db := InitDB("test_session_delete.db")
 
-	store, _ := NewStore(WithDb(db), WithTableName("session"), WithAutoMigrate(true))
+	store, _ := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_delete",
+		AutomigrateEnabled: true,
+	})
 
 	sessionKey := "SESSION_KEY_DELETE"
 
@@ -96,7 +101,10 @@ func TestSessionDelete(t *testing.T) {
 func TestStoreEnableDebug(t *testing.T) {
 	db := InitDB("test_session_debug.db")
 
-	store, _ := NewStore(WithDb(db), WithTableName("session_debug"))
+	store, _ := NewStore(NewStoreOptions{
+		DB:               db,
+		SessionTableName: "session_debug",
+	})
 	store.EnableDebug(true)
 
 	err := store.AutoMigrate()
@@ -109,16 +117,16 @@ func TestStoreEnableDebug(t *testing.T) {
 func TestSetKey(t *testing.T) {
 	db := InitDB("test_session_set_key.db")
 
-	store, _ := NewStore(WithDb(db), WithTableName("session_key"), WithAutoMigrate(true))
+	store, _ := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_set_key",
+		AutomigrateEnabled: true,
+	})
 
-	ok, err := store.Set("hello", "world", 1)
+	err := store.Set("hello", "world", 1)
 
 	if err != nil {
 		t.Fatalf("Setting key failed: " + err.Error())
-	}
-
-	if ok != true {
-		t.Fatalf("Response not true: " + err.Error())
 	}
 
 	value := store.Get("hello", "")
@@ -131,30 +139,26 @@ func TestSetKey(t *testing.T) {
 func TestUpdateKey(t *testing.T) {
 	db := InitDB("test_session_update_key.db")
 
-	store, _ := NewStore(WithDb(db), WithTableName("session_update"), WithAutoMigrate(true))
+	store, _ := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_update_key",
+		AutomigrateEnabled: true,
+	})
 
-	ok, err := store.Set("hello", "world", 1)
+	err := store.Set("hello", "world", 1)
 
 	if err != nil {
 		t.Fatalf("Setting key failed: " + err.Error())
-	}
-
-	if ok != true {
-		t.Fatalf("Response not true: " + err.Error())
 	}
 
 	session1 := store.FindByKey("hello")
 
 	time.Sleep(2 * time.Second)
 
-	ok2, err2 := store.Set("hello", "world", 1)
+	err2 := store.Set("hello", "world", 1)
 
 	if err2 != nil {
 		t.Fatalf("Update setting key failed: " + err2.Error())
-	}
-
-	if ok2 != true {
-		t.Fatalf("Update response not true: " + err.Error())
 	}
 
 	session2 := store.FindByKey("hello")
@@ -183,20 +187,20 @@ func TestUpdateKey(t *testing.T) {
 func TestSetGetJSOM(t *testing.T) {
 	db := InitDB("test_session_json.db")
 
-	store, _ := NewStore(WithDb(db), WithTableName("session_json"), WithAutoMigrate(true))
+	store, _ := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_json",
+		AutomigrateEnabled: true,
+	})
 
 	value := map[string]string{
 		"key1": "value1",
 		"key2": "value2",
 		"key3": "value3",
 	}
-	isSaved, err := store.SetJSON("mykey", value, 5)
+	err := store.SetJSON("mykey", value, 5)
 
 	if err != nil {
-		t.Fatalf("Set JSON failed: " + err.Error())
-	}
-
-	if !isSaved {
 		t.Fatalf("Set JSON failed: " + err.Error())
 	}
 
@@ -227,7 +231,11 @@ func TestSetGetJSOM(t *testing.T) {
 func TestHas(t *testing.T) {
 	db := InitDB("test_session_has.db")
 
-	store, _ := NewStore(WithDb(db), WithTableName("session_json"), WithAutoMigrate(true))
+	store, _ := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_has",
+		AutomigrateEnabled: true,
+	})
 
 	hasNo, err := store.Has("mykey")
 
@@ -239,13 +247,9 @@ func TestHas(t *testing.T) {
 		t.Fatalf("Has no failed: " + err.Error())
 	}
 
-	isSaved, err := store.Set("mykey", "test", 5)
+	errSet := store.Set("mykey", "test", 5)
 
-	if err != nil {
-		t.Fatalf("Set failed: " + err.Error())
-	}
-
-	if !isSaved {
+	if errSet != nil {
 		t.Fatalf("Set failed: " + err.Error())
 	}
 

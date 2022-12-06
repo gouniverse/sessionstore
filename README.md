@@ -13,15 +13,21 @@ go get -u github.com/gouniverse/sessionstore
 
 ## Setup
 
-```
-sessionStore = sessionstore.NewStore(sessionstore.Db(databaseInstance), sessionstore.WithTableName("my_session"), sessionstore.WithAutoMigrate(true))
+```go
+sessionStore = sessionstore.NewStore(sessionstore.NewStoreOptions{
+		DB:                 databaseInstance,
+		SessionTableName:   "my_session",
+		AutomigrateEnabled: true,
+    DebugEnabled:       false,
+	}
+)
 
 go sessionStore.ExpireSessionGoroutine()
 ```
 
 ## Usage
 
-```
+```go
 sessionKey  := "ABCDEFG"
 sessionExpireSeconds = 2*60*60
 
@@ -75,6 +81,8 @@ log.Printls(res["key1"])
 
 
 ## Changelog
+
+2022.12.06 - Changed store setup to use struct
 
 2022.01.01 - Added "Has" method
 

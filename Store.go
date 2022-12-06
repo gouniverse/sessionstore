@@ -26,54 +26,70 @@ type Store struct {
 	dbDriverName       string
 	timeoutSeconds     int64
 	automigrateEnabled bool
-	debug              bool
+	debugEnabled       bool
 }
 
-// StoreOption options for the session store
-type StoreOption func(*Store)
-
-// WithAutoMigrate sets the table name for the cache store
-func WithAutoMigrate(automigrateEnabled bool) StoreOption {
-	return func(s *Store) {
-		s.automigrateEnabled = automigrateEnabled
-	}
+type NewStoreOptions struct {
+	SessionTableName   string
+	DB                 *sql.DB
+	DbDriverName       string
+	TimeoutSeconds     int64
+	AutomigrateEnabled bool
+	DebugEnabled       bool
 }
 
-// WithDb sets the database for the setting store
-func WithDb(db *sql.DB) StoreOption {
-	return func(s *Store) {
-		s.db = db
-		s.dbDriverName = s.DriverName(s.db)
-	}
-}
+// // StoreOption options for the session store
+// type StoreOption func(*Store)
 
-// WithDebug prints the SQL queries
-func WithDebug(debug bool) StoreOption {
-	return func(s *Store) {
-		s.debug = debug
-	}
-}
+// // WithAutoMigrate sets the table name for the cache store
+// func WithAutoMigrate(automigrateEnabled bool) StoreOption {
+// 	return func(s *Store) {
+// 		s.automigrateEnabled = automigrateEnabled
+// 	}
+// }
 
-// WithTableName sets the table name for the session store
-func WithTableName(sessionTableName string) StoreOption {
-	return func(s *Store) {
-		s.sessionTableName = sessionTableName
-	}
-}
+// // WithDb sets the database for the setting store
+// func WithDb(db *sql.DB) StoreOption {
+// 	return func(s *Store) {
+// 		s.db = db
+// 		s.dbDriverName = s.DriverName(s.db)
+// 	}
+// }
+
+// // WithDebug prints the SQL queries
+// func WithDebug(debug bool) StoreOption {
+// 	return func(s *Store) {
+// 		s.debug = debug
+// 	}
+// }
+
+// // WithTableName sets the table name for the session store
+// func WithTableName(sessionTableName string) StoreOption {
+// 	return func(s *Store) {
+// 		s.sessionTableName = sessionTableName
+// 	}
+// }
 
 // NewStore creates a new session store
-func NewStore(opts ...StoreOption) (*Store, error) {
-	store := &Store{}
-	for _, opt := range opts {
-		opt(store)
+func NewStore(opts NewStoreOptions) (*Store, error) {
+	store := &Store{
+		sessionTableName:   opts.SessionTableName,
+		automigrateEnabled: opts.AutomigrateEnabled,
+		db:                 opts.DB,
+		dbDriverName:       opts.DbDriverName,
+		debugEnabled:       opts.DebugEnabled,
 	}
 
 	if store.sessionTableName == "" {
 		return nil, errors.New("session store: sessionTableName is required")
 	}
 
-	if store.debug {
-		log.Println(store.dbDriverName)
+	if store.db == nil {
+		return nil, errors.New("session store: DB is required")
+	}
+
+	if store.dbDriverName == "" {
+		store.dbDriverName = store.DriverName(store.db)
 	}
 
 	store.timeoutSeconds = 2 * 60 * 60 // 2 hours
@@ -119,7 +135,7 @@ func (st *Store) DriverName(db *sql.DB) string {
 
 // EnableDebug - enables the debug option
 func (st *Store) EnableDebug(debug bool) {
-	st.debug = debug
+	st.debugEnabled = debug
 }
 
 // ExpireSessionGoroutine - soft deletes expired cache
@@ -127,12 +143,12 @@ func (st *Store) ExpireSessionGoroutine() error {
 	i := 0
 	for {
 		i++
-		if st.debug {
+		if st.debugEnabled {
 			log.Println("Cleaning expired sessions...")
 		}
 		sqlStr, _, _ := goqu.Dialect(st.dbDriverName).From(st.sessionTableName).Where(goqu.C("expires_at").Lt(time.Now())).Delete().ToSQL()
 
-		if st.debug {
+		if st.debugEnabled {
 			log.Println(sqlStr)
 		}
 
@@ -157,7 +173,7 @@ func (st *Store) ExpireSessionGoroutine() error {
 func (st *Store) Delete(sessionKey string) (bool, error) {
 	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).From(st.sessionTableName).Where(goqu.C("session_key").Eq(sessionKey)).Delete().ToSQL()
 
-	if st.debug {
+	if st.debugEnabled {
 		log.Println(sqlStr)
 	}
 
@@ -183,7 +199,7 @@ func (st *Store) FindByKey(sessionKey string) *Session {
 	// key exists, expires is < now, deleted null
 	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).From(st.sessionTableName).Where(goqu.C("session_key").Eq(sessionKey), goqu.C("expires_at").Gt(time.Now()), goqu.C("deleted_at").IsNull()).Select("*").ToSQL()
 
-	if st.debug {
+	if st.debugEnabled {
 		log.Println(sqlStr)
 	}
 
@@ -239,7 +255,7 @@ func (st *Store) Has(sessionKey string) (bool, error) {
 	// key exists, expires is < now, deleted null
 	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).From(st.sessionTableName).Where(goqu.C("session_key").Eq(sessionKey), goqu.C("expires_at").Gt(time.Now()), goqu.C("deleted_at").IsNull()).Select(goqu.COUNT("*")).As("count").ToSQL()
 
-	if st.debug {
+	if st.debugEnabled {
 		log.Println(sqlStr)
 	}
 
@@ -266,7 +282,7 @@ func (st *Store) Has(sessionKey string) (bool, error) {
 }
 
 // Set sets a key in store
-func (st *Store) Set(sessionKey string, value string, seconds int64) (bool, error) {
+func (st *Store) Set(sessionKey string, value string, seconds int64) error {
 	session := st.FindByKey(sessionKey)
 
 	expiresAt := time.Now().Add(time.Second * time.Duration(seconds))
@@ -290,24 +306,24 @@ func (st *Store) Set(sessionKey string, value string, seconds int64) (bool, erro
 		sqlStr, _, _ = goqu.Dialect(st.dbDriverName).Update(st.sessionTableName).Set(fields).ToSQL()
 	}
 
-	if st.debug {
+	if st.debugEnabled {
 		log.Println(sqlStr)
 	}
 
 	_, err := st.db.Exec(sqlStr)
 
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return true, nil
+	return nil
 }
 
 // SetJSON convenience method which saves the supplied value as JSON, use GetJSON to extract
-func (st *Store) SetJSON(key string, value interface{}, seconds int64) (bool, error) {
+func (st *Store) SetJSON(key string, value interface{}, seconds int64) error {
 	jsonValue, jsonError := json.Marshal(value)
 	if jsonError != nil {
-		return false, jsonError
+		return jsonError
 	}
 
 	return st.Set(key, string(jsonValue), seconds)
@@ -443,56 +459,3 @@ func (st *Store) SetJSON(key string, value interface{}, seconds int64) (bool, er
 
 // 	return true, nil
 // }
-
-// SQLCreateTable returns a SQL string for creating the cache table
-func (st *Store) SQLCreateTable() string {
-	sqlMysql := `
-	CREATE TABLE IF NOT EXISTS ` + st.sessionTableName + ` (
-	  id varchar(40) NOT NULL PRIMARY KEY,
-	  session_key varchar(40) NOT NULL,
-	  session_value text,
-	  expires_at datetime,
-	  created_at datetime NOT NULL,
-	  updated_at datetime NOT NULL,
-	  deleted_at datetime
-	);
-	`
-
-	sqlPostgres := `
-	CREATE TABLE IF NOT EXISTS "` + st.sessionTableName + `" (
-	  "id" varchar(40) NOT NULL PRIMARY KEY,
-	  "session_key" varchar(40) NOT NULL,
-	  "session_value" text,
-	  "expires_at" timestamptz(6),
-	  "created_at" timestamptz(6) NOT NULL,
-	  "updated_at" timestamptz(6) NOT NULL,
-	  "deleted_at" timestamptz(6)
-	)
-	`
-
-	sqlSqlite := `
-	CREATE TABLE IF NOT EXISTS "` + st.sessionTableName + `" (
-	  "id" varchar(40) NOT NULL PRIMARY KEY,
-	  "session_key" varchar(40) NOT NULL,
-	  "session_value" text,
-	  "expires_at" datetime,
-	  "created_at" datetime NOT NULL,
-	  "updated_at" datetime NOT NULL,
-	  "deleted_at" datetime
-	)
-	`
-
-	sql := "unsupported driver " + st.dbDriverName
-
-	if st.dbDriverName == "mysql" {
-		sql = sqlMysql
-	}
-	if st.dbDriverName == "postgres" {
-		sql = sqlPostgres
-	}
-	if st.dbDriverName == "sqlite" {
-		sql = sqlSqlite
-	}
-
-	return sql
-}
