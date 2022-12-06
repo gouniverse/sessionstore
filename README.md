@@ -15,12 +15,11 @@ go get -u github.com/gouniverse/sessionstore
 
 ```go
 sessionStore = sessionstore.NewStore(sessionstore.NewStoreOptions{
-		DB:                 databaseInstance,
-		SessionTableName:   "my_session",
-		AutomigrateEnabled: true,
-    DebugEnabled:       false,
-	}
-)
+	DB:                 databaseInstance,
+	SessionTableName:   "my_session",
+	AutomigrateEnabled: true,
+	DebugEnabled:       false,
+})
 
 go sessionStore.ExpireSessionGoroutine()
 ```
@@ -43,7 +42,7 @@ isDeleted, err := sessionStore.Delete(sessionKey)
 
 
 
-```
+```go
 // Store JSON value
 sessionStore.SetJSON(sessionKey, sessionValue, sessionExpireSeconds)
 
