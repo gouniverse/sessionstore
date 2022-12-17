@@ -93,8 +93,14 @@ func TestSessionDelete(t *testing.T) {
 		t.Fatalf("Session remove key should return true on success")
 	}
 
-	if store.FindByKey(sessionKey) != nil {
-		t.Fatalf("Session should no longer be present")
+	session, errFind := store.FindByKey(sessionKey)
+
+	if errFind != nil {
+		t.Fatal("Session find error", errFind.Error())
+	}
+
+	if session != nil {
+		t.Fatal("Session should no longer be present")
 	}
 }
 
@@ -126,13 +132,17 @@ func TestSetKey(t *testing.T) {
 	err := store.Set("hello", "world", 1)
 
 	if err != nil {
-		t.Fatalf("Setting key failed: " + err.Error())
+		t.Fatal("Setting key failed:", err.Error())
 	}
 
-	value := store.Get("hello", "")
+	value, errGet := store.Get("hello", "")
+
+	if errGet != nil {
+		t.Fatal("Getting key failed: ", errGet.Error())
+	}
 
 	if value != "world" {
-		t.Fatalf("Incorrect value: " + err.Error())
+		t.Fatal("Incorrect value:", err.Error())
 	}
 }
 
@@ -151,7 +161,15 @@ func TestUpdateKey(t *testing.T) {
 		t.Fatalf("Setting key failed: " + err.Error())
 	}
 
-	session1 := store.FindByKey("hello")
+	session1, errFind := store.FindByKey("hello")
+
+	if errFind != nil {
+		t.Fatal("Session find error", errFind.Error())
+	}
+
+	if session1 == nil {
+		t.Fatal("Session 1 not found")
+	}
 
 	time.Sleep(2 * time.Second)
 
@@ -161,26 +179,30 @@ func TestUpdateKey(t *testing.T) {
 		t.Fatalf("Update setting key failed: " + err2.Error())
 	}
 
-	session2 := store.FindByKey("hello")
+	session2, errFind := store.FindByKey("hello")
+
+	if errFind != nil {
+		t.Fatal("Session find error", errFind.Error())
+	}
 
 	if session2 == nil {
-		t.Fatalf("Cache not found: " + err.Error())
+		t.Fatalf("Session 2 not found")
 	}
 
 	if session2.Value != "world" {
-		t.Fatalf("Value not correct: " + session2.Value)
+		t.Fatal("Value not correct:", session2.Value)
 	}
 
 	if session2.Key != "hello" {
-		t.Fatalf("Key not correct: " + session2.Key)
+		t.Fatal("Key not correct:", session2.Key)
 	}
 
 	if session2.UpdatedAt == session1.CreatedAt {
-		t.Fatalf("Updated at should be different from created at date: " + session2.UpdatedAt.Format(time.UnixDate))
+		t.Fatal("Updated at should be different from created at date:", session2.UpdatedAt.Format(time.UnixDate))
 	}
 
 	if session2.UpdatedAt.Sub(session1.CreatedAt).Seconds() < 1 {
-		t.Fatalf("Updated at should more than 1 second after created at date: " + session2.UpdatedAt.Format(time.UnixDate) + " - " + session1.CreatedAt.Format(time.UnixDate))
+		t.Fatal("Updated at should more than 1 second after created at date:", session2.UpdatedAt.Format(time.UnixDate), " - ", session1.CreatedAt.Format(time.UnixDate))
 	}
 }
 
