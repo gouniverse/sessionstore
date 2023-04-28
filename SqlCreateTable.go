@@ -16,8 +16,8 @@ func (st *Store) SQLCreateTable() string {
 
 	sqlPostgres := `
 	CREATE TABLE IF NOT EXISTS "` + st.sessionTableName + `" (
-	  "id" varchar(255) NOT NULL PRIMARY KEY,
-	  "session_key" varchar(40) NOT NULL,
+	  "id" varchar(40) NOT NULL PRIMARY KEY,
+	  "session_key" varchar(255) NOT NULL,
 	  "session_value" text,
 	  "expires_at" timestamptz(6),
 	  "created_at" timestamptz(6) NOT NULL,
@@ -28,8 +28,8 @@ func (st *Store) SQLCreateTable() string {
 
 	sqlSqlite := `
 	CREATE TABLE IF NOT EXISTS "` + st.sessionTableName + `" (
-	  "id" varchar(255) NOT NULL PRIMARY KEY,
-	  "session_key" varchar(40) NOT NULL,
+	  "id" varchar(40) NOT NULL PRIMARY KEY,
+	  "session_key" varchar(255) NOT NULL,
 	  "session_value" text,
 	  "expires_at" datetime,
 	  "created_at" datetime NOT NULL,
