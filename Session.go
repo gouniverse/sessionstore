@@ -8,11 +8,11 @@ import (
 type Session struct {
 	ID        string     `db:"id"`            // varchar(40), primary key
 	Key       string     `db:"session_key"`   // varchar(40)
-	Value     string     `db:"session_value"` // longtext
-	ExpiresAt *time.Time `db:"expires_at"`    // datettime NOT NULL
-	CreatedAt time.Time  `db:"created_at"`    // datettime NOT NULL
-	UpdatedAt time.Time  `db:"updated_at"`    // datettime NOT NULL
-	DeletedAt *time.Time `db:"deleted_at"`    // datettime DEFAULT NULL
+	Value     string     `db:"session_value"` // long text
+	ExpiresAt *time.Time `db:"expires_at"`    // datetime NOT NULL
+	CreatedAt time.Time  `db:"created_at"`    // datetime NOT NULL
+	UpdatedAt time.Time  `db:"updated_at"`    // datetime NOT NULL
+	DeletedAt *time.Time `db:"deleted_at"`    // datetime DEFAULT NULL
 }
 
 // // SessionDelete removes all keys from the sessiom

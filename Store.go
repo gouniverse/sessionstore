@@ -213,18 +213,39 @@ func (st *Store) Get(sessionKey string, valueDefault string) (string, error) {
 	return valueDefault, nil
 }
 
-// GetJSON attempts to parse the value as JSON, use with SetJSON
-func (st *Store) GetJSON(key string, valueDefault interface{}) (interface{}, error) {
+// GetAny attempts to parse the value as interface, use with SetAny
+func (st *Store) GetAny(key string, valueDefault interface{}) (interface{}, error) {
 	session, errFindByKey := st.FindByKey(key)
 
 	if errFindByKey != nil {
-		var empty interface{}
-		return empty, errFindByKey
+		return valueDefault, errFindByKey
 	}
 
 	if session != nil {
 		jsonValue := session.Value
 		var val interface{}
+		jsonError := json.Unmarshal([]byte(jsonValue), &val)
+		if jsonError != nil {
+			return valueDefault, jsonError
+		}
+
+		return val, nil
+	}
+
+	return valueDefault, nil
+}
+
+// GetMap attempts to parse the value as map[string]any, use with SetMap
+func (st *Store) GetMap(key string, valueDefault map[string]any) (map[string]any, error) {
+	session, errFindByKey := st.FindByKey(key)
+
+	if errFindByKey != nil {
+		return valueDefault, errFindByKey
+	}
+
+	if session != nil {
+		jsonValue := session.Value
+		var val map[string]any
 		jsonError := json.Unmarshal([]byte(jsonValue), &val)
 		if jsonError != nil {
 			return valueDefault, jsonError
@@ -276,6 +297,24 @@ func (st *Store) Has(sessionKey string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (st *Store) MergeMap(key string, mergeMap map[string]any, seconds int64) error {
+	currentMap, err := st.GetMap(key, nil)
+
+	if err != nil {
+		return err
+	}
+
+	if currentMap == nil {
+		return errors.New("nil found")
+	}
+
+	for mapKey, mapValue := range mergeMap {
+		currentMap[mapKey] = mapValue
+	}
+
+	return st.SetMap(key, currentMap, seconds)
 }
 
 // Set sets a key in store
@@ -332,8 +371,19 @@ func (st *Store) Set(sessionKey string, value string, seconds int64) error {
 	return nil
 }
 
-// SetJSON convenience method which saves the supplied value as JSON, use GetJSON to extract
-func (st *Store) SetJSON(key string, value interface{}, seconds int64) error {
+// SetAny convenience method which saves the supplied interface value, use GetAny to extract
+// Internally it serializes the data to JSON
+func (st *Store) SetAny(key string, value interface{}, seconds int64) error {
+	jsonValue, jsonError := json.Marshal(value)
+	if jsonError != nil {
+		return jsonError
+	}
+
+	return st.Set(key, string(jsonValue), seconds)
+}
+
+// SetMap convenience method which saves the supplied map, use GetMap to extract
+func (st *Store) SetMap(key string, value map[string]any, seconds int64) error {
 	jsonValue, jsonError := json.Marshal(value)
 	if jsonError != nil {
 		return jsonError

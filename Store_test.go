@@ -206,7 +206,7 @@ func TestUpdateKey(t *testing.T) {
 	}
 }
 
-func TestSetGetJSOM(t *testing.T) {
+func TestSetGetAny(t *testing.T) {
 	db := InitDB("test_session_json.db")
 
 	store, _ := NewStore(NewStoreOptions{
@@ -220,13 +220,13 @@ func TestSetGetJSOM(t *testing.T) {
 		"key2": "value2",
 		"key3": "value3",
 	}
-	err := store.SetJSON("mykey", value, 5)
+	err := store.SetAny("mykey", value, 5)
 
 	if err != nil {
 		t.Fatalf("Set JSON failed: " + err.Error())
 	}
 
-	result, err := store.GetJSON("mykey", "{}")
+	result, err := store.GetAny("mykey", "{}")
 
 	if err != nil {
 		t.Fatalf("Get JSON failed: " + err.Error())
@@ -283,5 +283,102 @@ func TestHas(t *testing.T) {
 
 	if !has {
 		t.Fatalf("Has failed: " + err.Error())
+	}
+}
+
+func TestSetGetMap(t *testing.T) {
+	db := InitDB("test_session_map.db")
+
+	store, _ := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_map",
+		AutomigrateEnabled: true,
+	})
+
+	value := map[string]any{
+		"key1": "value1",
+		"key2": "value2",
+		"key3": "value3",
+	}
+	err := store.SetMap("mykey", value, 5)
+
+	if err != nil {
+		t.Fatalf("Set Map failed: " + err.Error())
+	}
+
+	result, err := store.GetMap("mykey", nil)
+
+	if err != nil {
+		t.Fatalf("Get JSON failed: " + err.Error())
+	}
+
+	if result == nil {
+		t.Fatalf("GetMap failed: nil returned")
+	}
+
+	if result["key1"].(string) != value["key1"] {
+		t.Fatalf("Key1 not correct: " + result["key1"].(string))
+	}
+
+	if result["key2"] != value["key2"] {
+		t.Fatalf("Key2 not correct: " + result["key2"].(string))
+	}
+
+	if result["key3"] != value["key3"] {
+		t.Fatalf("Key3 not correct: " + result["key3"].(string))
+	}
+}
+
+func TestMergeMap(t *testing.T) {
+	db := InitDB("test_session_map_merge.db")
+
+	store, _ := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_map_merge",
+		AutomigrateEnabled: true,
+	})
+
+	value := map[string]any{
+		"key1": "value1",
+		"key2": "value2",
+		"key3": "value3",
+	}
+	err := store.SetMap("mykey", value, 5)
+
+	if err != nil {
+		t.Fatalf("Set Map failed: " + err.Error())
+	}
+
+	valueMerge := map[string]any{
+		"key2": "value22",
+		"key3": "value33",
+	}
+
+	err = store.MergeMap("mykey", valueMerge, 5)
+
+	if err != nil {
+		t.Fatalf("Merge Map failed: " + err.Error())
+	}
+
+	result, err := store.GetMap("mykey", nil)
+
+	if err != nil {
+		t.Fatalf("Get JSON failed: " + err.Error())
+	}
+
+	if result == nil {
+		t.Fatalf("GetMap failed: nil returned")
+	}
+
+	if result["key1"].(string) != value["key1"] {
+		t.Fatalf("Key1 not correct: " + result["key1"].(string))
+	}
+
+	if result["key2"].(string) != valueMerge["key2"] {
+		t.Fatalf("Key2 not correct: " + result["key2"].(string))
+	}
+
+	if result["key3"].(string) != valueMerge["key3"] {
+		t.Fatalf("Key3 not correct: " + result["key3"].(string))
 	}
 }
