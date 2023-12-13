@@ -31,16 +31,16 @@ go sessionStore.ExpireSessionGoroutine()
 - DriverName(db *sql.DB) string - finds the driver name from database
 - EnableDebug(debug bool) - enables / disables the debug option
 - ExpireSessionGoroutine() error - deletes the expired session keys
-- Delete(sessionKey string) (bool, error)  - Delete deletes a session
-- FindByKey(sessionKey string) (*Session, error) - FindByKey finds a session by key
-- Get(sessionKey string, valueDefault string) (string, error) - Gets the session value as a string
-- GetAny(key string, valueDefault any) (any, error) - attempts to parse the value as interface, use with SetAny
-- GetMap(key string, valueDefault map[string]any) (map[string]any, error) - attempts to parse the value as map[string]any, use with SetMap
-- Has(sessionKey string) (bool, error) - Checks if a session by key exists
-- Set(sessionKey string, value string, seconds int64) error - Set sets a key in store
-- SetAny(key string, value any, seconds int64) error - convenience method which saves the supplied interface value, use GetAny to extract
-- MergeMap(key string, mergeMap map[string]any, seconds int64) error - updates an existing map
-- SetMap(key string, value map[string]any, seconds int64) error - convenience method which saves the supplied map, use GetMap to extract
+- Delete(sessionKey string, options SessionOptions) (bool, error)  - Delete deletes a session
+- FindByKey(sessionKey string, options SessionOptions) (*Session, error) - FindByKey finds a session by key
+- Get(sessionKey string, valueDefault string, options SessionOptions) (string, error) - Gets the session value as a string
+- GetAny(key string, valueDefault any, options SessionOptions) (any, error) - attempts to parse the value as interface, use with SetAny
+- GetMap(key string, valueDefault map[string]any, options SessionOptions) (map[string]any, error) - attempts to parse the value as map[string]any, use with SetMap
+- Has(sessionKey string, options SessionOptions) (bool, error) - Checks if a session by key exists
+- Set(sessionKey string, value string, seconds int64, options SessionOptions) error - Set sets a key in store
+- SetAny(key string, value any, seconds int64, options SessionOptions) error - convenience method which saves the supplied interface value, use GetAny to extract
+- MergeMap(key string, mergeMap map[string]any, seconds int64, options SessionOptions) error - updates an existing map
+- SetMap(key string, value map[string]any, seconds int64, options SessionOptions) error - convenience method which saves the supplied map, use GetMap to extract
 
 ## Usage
 
@@ -49,23 +49,23 @@ sessionKey  := "ABCDEFG"
 sessionExpireSeconds = 2*60*60
 
 // Create new / update existing session
-sessionStore.Set(sessionKey, sessionValue, sessionExpireSeconds)
+sessionStore.Set(sessionKey, sessionValue, sessionExpireSeconds, SessionOptions{})
 
 // Get session value, or default if not found
-value := sessionStore.Get(sessionKey, defaultValue)
+value := sessionStore.Get(sessionKey, defaultValue, SessionOptions{})
 
 // Delete session
-isDeleted, err := sessionStore.Delete(sessionKey)
+isDeleted, err := sessionStore.Delete(sessionKey, SessionOptions{})
 ```
 
 
 
 ```go
 // Store interface value
-sessionStore.SetAny(sessionKey, sessionValue, sessionExpireSeconds)
+sessionStore.SetAny(sessionKey, sessionValue, sessionExpireSeconds, SessionOptions{})
 
 // Get interface value
-value := sessionStore.GetAny(sessionKey, defaultValue)
+value := sessionStore.GetAny(sessionKey, defaultValue, SessionOptions{})
 
 
 
@@ -75,13 +75,13 @@ value := map[string]string{
   "key2": "value2",
   "key3": "value3",
 }
-isSaved, err := store.SetJSON("mykey", value, 5*60)
+isSaved, err := store.SetJSON("mykey", value, 5*60, SessionOptions{})
 
 if !isSaved {
   log.Fatal("Set failed: " + err.Error())
 }
 
-result, err := store.GetJSON("mykey", "{}")
+result, err := store.GetJSON("mykey", "{}", SessionOptions{})
 
 if err != nil {
   log.Fatal("Get failed: " + err.Error())

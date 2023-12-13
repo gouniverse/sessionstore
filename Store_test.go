@@ -41,10 +41,10 @@ func TestStoreCreate(t *testing.T) {
 		t.Fatalf("Store could not be created")
 	}
 
-	errSet := store.Set("post", "1234567890", 5)
+	errSet := store.Set("post", "1234567890", 5, SessionOptions{})
 
 	if errSet != nil {
-		t.Fatalf("Cache could not be created: " + err.Error())
+		t.Fatal("Session could not be created: ", errSet.Error())
 	}
 }
 
@@ -63,7 +63,7 @@ func TestStoreAutomigrate(t *testing.T) {
 		t.Fatalf("Automigrate failed: " + err.Error())
 	}
 
-	errSet := store.Set("post", "1234567890", 5)
+	errSet := store.Set("post", "1234567890", 5, SessionOptions{})
 
 	if errSet != nil {
 		t.Fatalf("Session could not be created: " + err.Error())
@@ -81,9 +81,9 @@ func TestSessionDelete(t *testing.T) {
 
 	sessionKey := "SESSION_KEY_DELETE"
 
-	store.Set(sessionKey, "123456", 5)
+	store.Set(sessionKey, "123456", 5, SessionOptions{})
 
-	isDeleted, err := store.Delete(sessionKey)
+	isDeleted, err := store.Delete(sessionKey, SessionOptions{})
 
 	if err != nil {
 		t.Fatalf("Session could not be deleted: " + err.Error())
@@ -93,7 +93,7 @@ func TestSessionDelete(t *testing.T) {
 		t.Fatalf("Session remove key should return true on success")
 	}
 
-	session, errFind := store.FindByKey(sessionKey)
+	session, errFind := store.FindByKey(sessionKey, SessionOptions{})
 
 	if errFind != nil {
 		t.Fatal("Session find error", errFind.Error())
@@ -129,20 +129,20 @@ func TestSetKey(t *testing.T) {
 		AutomigrateEnabled: true,
 	})
 
-	err := store.Set("hello", "world", 1)
+	err := store.Set("hello", "world", 1, SessionOptions{})
 
 	if err != nil {
 		t.Fatal("Setting key failed:", err.Error())
 	}
 
-	value, errGet := store.Get("hello", "")
+	value, errGet := store.Get("hello", "", SessionOptions{})
 
 	if errGet != nil {
 		t.Fatal("Getting key failed: ", errGet.Error())
 	}
 
 	if value != "world" {
-		t.Fatal("Incorrect value:", err.Error())
+		t.Fatal("Incorrect value:", value)
 	}
 }
 
@@ -155,13 +155,13 @@ func TestUpdateKey(t *testing.T) {
 		AutomigrateEnabled: true,
 	})
 
-	err := store.Set("hello", "world", 1)
+	err := store.Set("hello", "world", 1, SessionOptions{})
 
 	if err != nil {
 		t.Fatalf("Setting key failed: " + err.Error())
 	}
 
-	session1, errFind := store.FindByKey("hello")
+	session1, errFind := store.FindByKey("hello", SessionOptions{})
 
 	if errFind != nil {
 		t.Fatal("Session find error", errFind.Error())
@@ -173,13 +173,13 @@ func TestUpdateKey(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	err2 := store.Set("hello", "world", 1)
+	err2 := store.Set("hello", "world", 1, SessionOptions{})
 
 	if err2 != nil {
 		t.Fatalf("Update setting key failed: " + err2.Error())
 	}
 
-	session2, errFind := store.FindByKey("hello")
+	session2, errFind := store.FindByKey("hello", SessionOptions{})
 
 	if errFind != nil {
 		t.Fatal("Session find error", errFind.Error())
@@ -220,17 +220,19 @@ func TestSetGetAny(t *testing.T) {
 		"key2": "value2",
 		"key3": "value3",
 	}
-	err := store.SetAny("mykey", value, 5)
+	err := store.SetAny("mykey", value, 5, SessionOptions{})
 
 	if err != nil {
 		t.Fatalf("Set JSON failed: " + err.Error())
 	}
 
-	result, err := store.GetAny("mykey", "{}")
+	result, err := store.GetAny("mykey", "{}", SessionOptions{})
 
 	if err != nil {
 		t.Fatalf("Get JSON failed: " + err.Error())
 	}
+
+	t.Log("Result: ", result)
 
 	var res = map[string]string{}
 	for k, v := range result.(map[string]interface{}) {
@@ -259,30 +261,30 @@ func TestHas(t *testing.T) {
 		AutomigrateEnabled: true,
 	})
 
-	hasNo, err := store.Has("mykey")
+	hasNo, err := store.Has("mykey", SessionOptions{})
 
 	if err != nil {
 		t.Fatalf("Has no failed: " + err.Error())
 	}
 
 	if hasNo {
-		t.Fatalf("Has no failed: " + err.Error())
+		t.Fatal("Has no failed: ", hasNo)
 	}
 
-	errSet := store.Set("mykey", "test", 5)
+	errSet := store.Set("mykey", "test", 5, SessionOptions{})
 
 	if errSet != nil {
-		t.Fatalf("Set failed: " + err.Error())
+		t.Fatalf("Set failed: " + errSet.Error())
 	}
 
-	has, err := store.Has("mykey")
+	has, err := store.Has("mykey", SessionOptions{})
 
 	if err != nil {
 		t.Fatalf("Has failed: " + err.Error())
 	}
 
 	if !has {
-		t.Fatalf("Has failed: " + err.Error())
+		t.Fatal("Has failed: ", has)
 	}
 }
 
@@ -300,13 +302,13 @@ func TestSetGetMap(t *testing.T) {
 		"key2": "value2",
 		"key3": "value3",
 	}
-	err := store.SetMap("mykey", value, 5)
+	err := store.SetMap("mykey", value, 5, SessionOptions{})
 
 	if err != nil {
 		t.Fatalf("Set Map failed: " + err.Error())
 	}
 
-	result, err := store.GetMap("mykey", nil)
+	result, err := store.GetMap("mykey", nil, SessionOptions{})
 
 	if err != nil {
 		t.Fatalf("Get JSON failed: " + err.Error())
@@ -343,7 +345,7 @@ func TestMergeMap(t *testing.T) {
 		"key2": "value2",
 		"key3": "value3",
 	}
-	err := store.SetMap("mykey", value, 5)
+	err := store.SetMap("mykey", value, 5, SessionOptions{})
 
 	if err != nil {
 		t.Fatalf("Set Map failed: " + err.Error())
@@ -354,13 +356,13 @@ func TestMergeMap(t *testing.T) {
 		"key3": "value33",
 	}
 
-	err = store.MergeMap("mykey", valueMerge, 5)
+	err = store.MergeMap("mykey", valueMerge, 5, SessionOptions{})
 
 	if err != nil {
 		t.Fatalf("Merge Map failed: " + err.Error())
 	}
 
-	result, err := store.GetMap("mykey", nil)
+	result, err := store.GetMap("mykey", nil, SessionOptions{})
 
 	if err != nil {
 		t.Fatalf("Get JSON failed: " + err.Error())

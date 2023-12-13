@@ -8,6 +8,9 @@ import (
 type Session struct {
 	ID        string     `db:"id"`            // varchar(40), primary key
 	Key       string     `db:"session_key"`   // varchar(40)
+	UserID    string     `db:"user_id"`       // varchar(40)
+	IPAddress string     `db:"ip_address"`    // varchar(50)
+	UserAgent string     `db:"user_agent"`    // varchar(1024)
 	Value     string     `db:"session_value"` // long text
 	ExpiresAt *time.Time `db:"expires_at"`    // datetime NOT NULL
 	CreatedAt time.Time  `db:"created_at"`    // datetime NOT NULL
