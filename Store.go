@@ -140,6 +140,24 @@ func (st *Store) ExpireSessionGoroutine() error {
 	}
 }
 
+func (st *Store) Extend(sessionKey string, seconds int64, options SessionOptions) (bool, error) {
+	session, errFindByKey := st.FindByKey(sessionKey, options)
+
+	if errFindByKey != nil {
+		return false, errFindByKey
+	}
+
+	if session == nil {
+		return false, nil
+	}
+
+	// expiresAt := time.Now().Add(time.Second * time.Duration(seconds))
+
+	// session.ExpiresAt = &expiresAt
+
+	return true, nil
+}
+
 // Delete deletes a session
 func (st *Store) Delete(sessionKey string, options SessionOptions) (bool, error) {
 	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).From(st.sessionTableName).Where(goqu.C("session_key").Eq(sessionKey)).Delete().ToSQL()
