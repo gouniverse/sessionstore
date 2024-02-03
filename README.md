@@ -32,6 +32,7 @@ go sessionStore.ExpireSessionGoroutine()
 - EnableDebug(debug bool) - enables / disables the debug option
 - ExpireSessionGoroutine() error - deletes the expired session keys
 - Delete(sessionKey string, options SessionOptions) (bool, error)  - Delete deletes a session
+- Extend(sessionKey string, seconds int64, options SessionOptions) error  - Extends a session
 - FindByKey(sessionKey string, options SessionOptions) (*Session, error) - FindByKey finds a session by key
 - Get(sessionKey string, valueDefault string, options SessionOptions) (string, error) - Gets the session value as a string
 - GetAny(key string, valueDefault any, options SessionOptions) (any, error) - attempts to parse the value as interface, use with SetAny
@@ -98,6 +99,8 @@ log.Println(res["key1"])
 
 
 ## Changelog
+
+2024.01.03 - Added "Extend" method
 
 2023.08.03 - Renamed "SetJSON", "GetJSON" methods to "SetAny", "GetAny"
 
