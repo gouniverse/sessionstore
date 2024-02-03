@@ -384,3 +384,52 @@ func TestMergeMap(t *testing.T) {
 		t.Fatalf("Key3 not correct: " + result["key3"].(string))
 	}
 }
+
+func TestExtend(t *testing.T) {
+	db := InitDB("test_session_extend.db")
+
+	store, _ := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_extend",
+		AutomigrateEnabled: true,
+	})
+
+	err := store.Set("mykey", "test", 5, SessionOptions{})
+
+	if err != nil {
+		t.Fatal("Set failed: " + err.Error())
+	}
+
+	isOK, err := store.Extend("mykey", 100, SessionOptions{})
+
+	if err != nil {
+		t.Fatal("Extend failed: " + err.Error())
+	}
+
+	if !isOK {
+		t.Fatal("Extend failed: " + err.Error())
+	}
+
+	session, err := store.FindByKey("mykey", SessionOptions{})
+
+	if err != nil {
+		t.Fatal("Extend failed: " + err.Error())
+	}
+
+	if session == nil {
+		t.Fatal("Extend failed. Session is NIL")
+	}
+
+	if session.Value != "test" {
+		t.Fatal("Extend failed. Value is wrong", session.Value)
+	}
+
+	if session.ExpiresAt.Before(time.Now().Add(90 * time.Second)) {
+		t.Fatal("Extend failed. ExpiresAt must be more than 90 seconds", session.ExpiresAt)
+	}
+
+	if !session.ExpiresAt.Before(time.Now().Add(110 * time.Second)) {
+		t.Fatal("Extend failed. ExpiresAt must be less than 110 seconds", session.ExpiresAt)
+	}
+
+}

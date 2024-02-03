@@ -5,6 +5,7 @@ import "database/sql"
 type StoreInterface interface {
 	EnableDebug(debug bool)
 	AutoMigrate() error
+	Extend(sessionKey string, seconds int64, options SessionOptions) (bool, error)
 	Get(key string, valueDefault string, options SessionOptions) (string, error)
 	GetAny(key string, valueDefault interface{}, options SessionOptions) (interface{}, error)
 	GetMap(key string, valueDefault map[string]any, options SessionOptions) (map[string]any, error)

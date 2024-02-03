@@ -151,9 +151,15 @@ func (st *Store) Extend(sessionKey string, seconds int64, options SessionOptions
 		return false, nil
 	}
 
-	// expiresAt := time.Now().Add(time.Second * time.Duration(seconds))
+	expiresAt := time.Now().Add(time.Second * time.Duration(seconds))
 
-	// session.ExpiresAt = &expiresAt
+	session.ExpiresAt = &expiresAt
+
+	err := st.sessionUpdate(*session)
+
+	if err != nil {
+		return false, err
+	}
 
 	return true, nil
 }
@@ -338,43 +344,11 @@ func (st *Store) MergeMap(key string, mergeMap map[string]any, seconds int64, op
 	return st.SetMap(key, currentMap, seconds, options)
 }
 
-// Set sets a key in store
-func (st *Store) Set(sessionKey string, value string, seconds int64, options SessionOptions) error {
-	session, errFindByKey := st.FindByKey(sessionKey, options)
-
-	if errFindByKey != nil {
-		return errFindByKey
-	}
-
-	expiresAt := time.Now().Add(time.Second * time.Duration(seconds))
-
-	var sqlStr string
-	var sqlErr error
-	if session == nil {
-		var newSession = Session{
-			ID:        uid.MicroUid(),
-			Key:       sessionKey,
-			Value:     value,
-			ExpiresAt: &expiresAt,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-			DeletedAt: &time.Time{},
-		}
-		sqlStr, _, sqlErr = goqu.Dialect(st.dbDriverName).
-			Insert(st.sessionTableName).
-			Rows(newSession).
-			ToSQL()
-	} else {
-		fields := map[string]interface{}{}
-		fields["session_value"] = value
-		fields["expires_at"] = &expiresAt
-		fields["updated_at"] = time.Now()
-		sqlStr, _, sqlErr = goqu.Dialect(st.dbDriverName).
-			Update(st.sessionTableName).
-			Where(goqu.C("session_key").Eq(sessionKey), goqu.C("expires_at").Gt(time.Now()), goqu.C("deleted_at").Eq(time.Time{})).
-			Set(fields).
-			ToSQL()
-	}
+func (st *Store) sessionCreate(session Session) error {
+	sqlStr, _, sqlErr := goqu.Dialect(st.dbDriverName).
+		Insert(st.sessionTableName).
+		Rows(session).
+		ToSQL()
 
 	if sqlErr != nil {
 		return sqlErr
@@ -391,6 +365,66 @@ func (st *Store) Set(sessionKey string, value string, seconds int64, options Ses
 	}
 
 	return nil
+}
+
+func (st *Store) sessionUpdate(session Session) error {
+	fields := map[string]interface{}{}
+	fields["session_value"] = session.Value
+	fields["expires_at"] = session.ExpiresAt
+	fields["updated_at"] = time.Now()
+
+	sqlStr, _, sqlErr := goqu.Dialect(st.dbDriverName).
+		Update(st.sessionTableName).
+		Where(goqu.C("session_key").Eq(session.Key), goqu.C("expires_at").Gt(time.Now()), goqu.C("deleted_at").Eq(time.Time{})).
+		Set(fields).
+		ToSQL()
+
+	if sqlErr != nil {
+		return sqlErr
+	}
+
+	if st.debugEnabled {
+		log.Println(sqlStr)
+	}
+
+	_, err := st.db.Exec(sqlStr)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Set sets a key in store
+func (st *Store) Set(sessionKey string, value string, seconds int64, options SessionOptions) error {
+	session, errFindByKey := st.FindByKey(sessionKey, options)
+
+	if errFindByKey != nil {
+		return errFindByKey
+	}
+
+	expiresAt := time.Now().Add(time.Second * time.Duration(seconds))
+
+	if session == nil {
+		var newSession = Session{
+			ID:        uid.MicroUid(),
+			Key:       sessionKey,
+			Value:     value,
+			ExpiresAt: &expiresAt,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			DeletedAt: &time.Time{},
+		}
+
+		return st.sessionCreate(newSession)
+	} else {
+		session.Value = value
+		session.ExpiresAt = &expiresAt
+		session.UpdatedAt = time.Now()
+
+		return st.sessionUpdate(*session)
+	}
 }
 
 // SetAny convenience method which saves the supplied interface value, use GetAny to extract
