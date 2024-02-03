@@ -140,15 +140,15 @@ func (st *Store) ExpireSessionGoroutine() error {
 	}
 }
 
-func (st *Store) Extend(sessionKey string, seconds int64, options SessionOptions) (bool, error) {
+func (st *Store) Extend(sessionKey string, seconds int64, options SessionOptions) error {
 	session, errFindByKey := st.FindByKey(sessionKey, options)
 
 	if errFindByKey != nil {
-		return false, errFindByKey
+		return errFindByKey
 	}
 
 	if session == nil {
-		return false, nil
+		return errors.New("session not found")
 	}
 
 	expiresAt := time.Now().Add(time.Second * time.Duration(seconds))
@@ -158,10 +158,10 @@ func (st *Store) Extend(sessionKey string, seconds int64, options SessionOptions
 	err := st.sessionUpdate(*session)
 
 	if err != nil {
-		return false, err
+		return err
 	}
 
-	return true, nil
+	return nil
 }
 
 // Delete deletes a session

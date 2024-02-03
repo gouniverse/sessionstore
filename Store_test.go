@@ -400,13 +400,9 @@ func TestExtend(t *testing.T) {
 		t.Fatal("Set failed: " + err.Error())
 	}
 
-	isOK, err := store.Extend("mykey", 100, SessionOptions{})
+	err = store.Extend("mykey", 100, SessionOptions{})
 
 	if err != nil {
-		t.Fatal("Extend failed: " + err.Error())
-	}
-
-	if !isOK {
 		t.Fatal("Extend failed: " + err.Error())
 	}
 
