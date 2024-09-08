@@ -1,7 +1,5 @@
 package sessionstore
 
-import "database/sql"
-
 type StoreInterface interface {
 	EnableDebug(debug bool)
 	AutoMigrate() error
@@ -14,5 +12,4 @@ type StoreInterface interface {
 	SetAny(key string, value interface{}, seconds int64, options SessionOptions) error
 	SetMap(key string, value map[string]any, seconds int64, options SessionOptions) error
 	Delete(sessionKey string, options SessionOptions) (bool, error)
-	DriverName(db *sql.DB) string
 }

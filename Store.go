@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
-	"reflect"
-	"strings"
 	"time"
 
 	"github.com/doug-martin/goqu/v9"
@@ -16,6 +14,7 @@ import (
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlite3"   // importing sqlite3 dialect
 	_ "github.com/doug-martin/goqu/v9/dialect/sqlserver" // importing sqlserver dialect
 	"github.com/georgysavva/scany/sqlscan"
+	"github.com/gouniverse/sb"
 	"github.com/gouniverse/uid"
 )
 
@@ -60,7 +59,7 @@ func NewStore(opts NewStoreOptions) (*Store, error) {
 	}
 
 	if store.dbDriverName == "" {
-		store.dbDriverName = store.DriverName(store.db)
+		store.dbDriverName = sb.DatabaseDriverName(store.db)
 	}
 
 	store.timeoutSeconds = 2 * 60 * 60 // 2 hours
@@ -83,25 +82,6 @@ func (st *Store) AutoMigrate() error {
 	}
 
 	return nil
-}
-
-// DriverName finds the driver name from database
-func (st *Store) DriverName(db *sql.DB) string {
-	dv := reflect.ValueOf(db.Driver())
-	driverFullName := dv.Type().String()
-	if strings.Contains(driverFullName, "mysql") {
-		return "mysql"
-	}
-	if strings.Contains(driverFullName, "postgres") || strings.Contains(driverFullName, "pq") {
-		return "postgres"
-	}
-	if strings.Contains(driverFullName, "sqlite") {
-		return "sqlite"
-	}
-	if strings.Contains(driverFullName, "mssql") {
-		return "mssql"
-	}
-	return driverFullName
 }
 
 // EnableDebug - enables the debug option
