@@ -158,12 +158,20 @@ func (st *Store) Extend(sessionKey string, seconds int64, options SessionOptions
 
 // Delete deletes a session
 func (st *Store) Delete(sessionKey string, options SessionOptions) (bool, error) {
+	wheres := []goqu.Expression{
+		goqu.C(COLUMN_SESSION_KEY).Eq(sessionKey),
+		goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent),
+		goqu.C(COLUMN_IP_ADDRESS).Eq(options.IPAddress),
+	}
+
+	// Only add the condition, if specifically requested
+	if len(options.UserID) > 0 {
+		wheres = append(wheres, goqu.C(COLUMN_USER_ID).Eq(options.UserID))
+	}
+
 	sqlStr, sqlParams, err := goqu.Dialect(st.dbDriverName).
 		From(st.sessionTableName).
-		Where(goqu.C(COLUMN_SESSION_KEY).Eq(sessionKey)).
-		Where(goqu.C(COLUMN_USER_ID).Eq(options.UserID)).
-		Where(goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent)).
-		Where(goqu.C(COLUMN_IP_ADDRESS).Eq(options.IPAddress)).
+		Where(wheres...).
 		Delete().
 		Prepared(true).
 		ToSQL()
@@ -196,15 +204,23 @@ func (st *Store) Delete(sessionKey string, options SessionOptions) (bool, error)
 
 // FindByKey finds a session by key
 func (st *Store) FindByKey(sessionKey string, options SessionOptions) (*Session, error) {
+	wheres := []goqu.Expression{
+		goqu.C(COLUMN_SESSION_KEY).Eq(sessionKey),
+		goqu.C(COLUMN_EXPIRES_AT).Gt(time.Now()),
+		goqu.C(COLUMN_DELETED_AT).Eq(time.Time{}),
+		goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent),
+		goqu.C(COLUMN_IP_ADDRESS).Eq(options.IPAddress),
+	}
+
+	// Only add the condition, if specifically requested
+	if len(options.UserID) > 0 {
+		wheres = append(wheres, goqu.C(COLUMN_USER_ID).Eq(options.UserID))
+	}
+
 	// key exists, expires is < now, deleted null
 	sqlStr, _, sqlErr := goqu.Dialect(st.dbDriverName).
 		From(st.sessionTableName).
-		Where(goqu.C(COLUMN_SESSION_KEY).Eq(sessionKey)).
-		Where(goqu.C(COLUMN_EXPIRES_AT).Gt(time.Now())).
-		Where(goqu.C(COLUMN_DELETED_AT).Eq(time.Time{})).
-		Where(goqu.C(COLUMN_USER_ID).Eq(options.UserID)).
-		Where(goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent)).
-		Where(goqu.C(COLUMN_IP_ADDRESS).Eq(options.IPAddress)).
+		Where(wheres...).
 		Select("*").
 		ToSQL()
 
@@ -295,15 +311,23 @@ func (st *Store) GetMap(key string, valueDefault map[string]any, options Session
 
 // Has finds if a session by key exists
 func (st *Store) Has(sessionKey string, options SessionOptions) (bool, error) {
+	wheres := []goqu.Expression{
+		goqu.C(COLUMN_SESSION_KEY).Eq(sessionKey),
+		goqu.C(COLUMN_EXPIRES_AT).Gt(time.Now()),
+		goqu.C(COLUMN_DELETED_AT).Eq(time.Time{}),
+		goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent),
+		goqu.C(COLUMN_IP_ADDRESS).Eq(options.IPAddress),
+	}
+
+	// Only add the condition, if specifically requested
+	if len(options.UserID) > 0 {
+		wheres = append(wheres, goqu.C(COLUMN_USER_ID).Eq(options.UserID))
+	}
+
 	// key exists, expires is < now, deleted null
 	sqlStr, _, sqlErr := goqu.Dialect(st.dbDriverName).
 		From(st.sessionTableName).
-		Where(goqu.C(COLUMN_SESSION_KEY).Eq(sessionKey)).
-		Where(goqu.C(COLUMN_EXPIRES_AT).Gt(time.Now())).
-		Where(goqu.C(COLUMN_DELETED_AT).Eq(time.Time{})).
-		Where(goqu.C(COLUMN_USER_ID).Eq(options.UserID)).
-		Where(goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent)).
-		Where(goqu.C(COLUMN_IP_ADDRESS).Eq(options.IPAddress)).
+		Where(wheres...).
 		Select(goqu.COUNT("*")).As("count").
 		ToSQL()
 
@@ -387,14 +411,22 @@ func (st *Store) sessionUpdate(session Session, options SessionOptions) error {
 	fields[COLUMN_EXPIRES_AT] = session.ExpiresAt
 	fields[COLUMN_UPDATED_AT] = time.Now()
 
+	wheres := []goqu.Expression{
+		goqu.C(COLUMN_SESSION_KEY).Eq(session.Key),
+		goqu.C(COLUMN_EXPIRES_AT).Gt(time.Now()),
+		goqu.C(COLUMN_DELETED_AT).Eq(time.Time{}),
+		goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent),
+		goqu.C(COLUMN_IP_ADDRESS).Eq(options.IPAddress),
+	}
+
+	// Only add the condition, if specifically requested
+	if len(options.UserID) > 0 {
+		wheres = append(wheres, goqu.C(COLUMN_USER_ID).Eq(options.UserID))
+	}
+
 	sqlStr, _, sqlErr := goqu.Dialect(st.dbDriverName).
 		Update(st.sessionTableName).
-		Where(goqu.C(COLUMN_SESSION_KEY).Eq(session.Key)).
-		Where(goqu.C(COLUMN_EXPIRES_AT).Gt(time.Now())).
-		Where(goqu.C(COLUMN_DELETED_AT).Eq(time.Time{})).
-		Where(goqu.C(COLUMN_USER_ID).Eq(options.UserID)).
-		Where(goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent)).
-		Where(goqu.C(COLUMN_IP_ADDRESS).Eq(options.IPAddress)).
+		Where(wheres...).
 		Set(fields).
 		ToSQL()
 
