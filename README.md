@@ -50,23 +50,38 @@ sessionKey  := "ABCDEFG"
 sessionExpireSeconds = 2*60*60
 
 // Create new / update existing session
-sessionStore.Set(sessionKey, sessionValue, sessionExpireSeconds, SessionOptions{})
+sessionStore.Set(sessionKey, sessionValue, sessionExpireSeconds, SessionOptions{
+  UserAgent: r.UserAgent(),
+	IPAddress: r.RemoteAddr,
+})
 
 // Get session value, or default if not found
-value := sessionStore.Get(sessionKey, defaultValue, SessionOptions{})
+value := sessionStore.Get(sessionKey, defaultValue, SessionOptions{
+  UserAgent: r.UserAgent(),
+	IPAddress: r.RemoteAddr,
+})
 
 // Delete session
-isDeleted, err := sessionStore.Delete(sessionKey, SessionOptions{})
+isDeleted, err := sessionStore.Delete(sessionKey, SessionOptions{
+  UserAgent: r.UserAgent(),
+	IPAddress: r.RemoteAddr,
+})
 ```
 
 
 
 ```go
 // Store interface value
-sessionStore.SetAny(sessionKey, sessionValue, sessionExpireSeconds, SessionOptions{})
+sessionStore.SetAny(sessionKey, sessionValue, sessionExpireSeconds, SessionOptions{
+  UserAgent: r.UserAgent(),
+	IPAddress: r.RemoteAddr,
+})
 
 // Get interface value
-value := sessionStore.GetAny(sessionKey, defaultValue, SessionOptions{})
+value := sessionStore.GetAny(sessionKey, defaultValue, SessionOptions{
+  UserAgent: r.UserAgent(),
+	IPAddress: r.RemoteAddr,
+})
 
 
 
@@ -76,13 +91,19 @@ value := map[string]string{
   "key2": "value2",
   "key3": "value3",
 }
-isSaved, err := store.SetJSON("mykey", value, 5*60, SessionOptions{})
+isSaved, err := store.SetJSON("mykey", value, 5*60, SessionOptions{
+  UserAgent: r.UserAgent(),
+	IPAddress: r.RemoteAddr,
+})
 
 if !isSaved {
   log.Fatal("Set failed: " + err.Error())
 }
 
-result, err := store.GetJSON("mykey", "{}", SessionOptions{})
+result, err := store.GetJSON("mykey", "{}", SessionOptions{
+  UserAgent: r.UserAgent(),
+	IPAddress: r.RemoteAddr,
+})
 
 if err != nil {
   log.Fatal("Get failed: " + err.Error())
@@ -99,6 +120,8 @@ log.Println(res["key1"])
 
 
 ## Changelog
+
+2024.09.08 - Added options (UserID, UserAgent, IPAddress)
 
 2024.01.03 - Added "Extend" method
 
