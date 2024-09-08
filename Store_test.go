@@ -90,7 +90,7 @@ func TestSessionDelete(t *testing.T) {
 	}
 
 	if !isDeleted {
-		t.Fatalf("Session remove key should return true on success")
+		t.Fatalf("Session delete key should return true on success")
 	}
 
 	session, errFind := store.FindByKey(sessionKey, SessionOptions{})
@@ -129,13 +129,21 @@ func TestSetKey(t *testing.T) {
 		AutomigrateEnabled: true,
 	})
 
-	err := store.Set("hello", "world", 1, SessionOptions{})
+	err := store.Set("hello", "world", 1, SessionOptions{
+		UserID:    "123456",
+		UserAgent: "UserAgent",
+		IPAddress: "127.0.0.1",
+	})
 
 	if err != nil {
 		t.Fatal("Setting key failed:", err.Error())
 	}
 
-	value, errGet := store.Get("hello", "", SessionOptions{})
+	value, errGet := store.Get("hello", "", SessionOptions{
+		UserID:    "123456",
+		UserAgent: "UserAgent",
+		IPAddress: "127.0.0.1",
+	})
 
 	if errGet != nil {
 		t.Fatal("Getting key failed: ", errGet.Error())
@@ -155,13 +163,21 @@ func TestUpdateKey(t *testing.T) {
 		AutomigrateEnabled: true,
 	})
 
-	err := store.Set("hello", "world", 1, SessionOptions{})
+	err := store.Set("hello", "world", 1, SessionOptions{
+		UserID:    "123456",
+		UserAgent: "UserAgent",
+		IPAddress: "127.0.0.1",
+	})
 
 	if err != nil {
 		t.Fatalf("Setting key failed: " + err.Error())
 	}
 
-	session1, errFind := store.FindByKey("hello", SessionOptions{})
+	session1, errFind := store.FindByKey("hello", SessionOptions{
+		UserID:    "123456",
+		UserAgent: "UserAgent",
+		IPAddress: "127.0.0.1",
+	})
 
 	if errFind != nil {
 		t.Fatal("Session find error", errFind.Error())
@@ -173,13 +189,21 @@ func TestUpdateKey(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	err2 := store.Set("hello", "world", 1, SessionOptions{})
+	err2 := store.Set("hello", "world", 1, SessionOptions{
+		UserID:    "123456",
+		UserAgent: "UserAgent",
+		IPAddress: "127.0.0.1",
+	})
 
 	if err2 != nil {
 		t.Fatalf("Update setting key failed: " + err2.Error())
 	}
 
-	session2, errFind := store.FindByKey("hello", SessionOptions{})
+	session2, errFind := store.FindByKey("hello", SessionOptions{
+		UserID:    "123456",
+		UserAgent: "UserAgent",
+		IPAddress: "127.0.0.1",
+	})
 
 	if errFind != nil {
 		t.Fatal("Session find error", errFind.Error())
@@ -220,13 +244,21 @@ func TestSetGetAny(t *testing.T) {
 		"key2": "value2",
 		"key3": "value3",
 	}
-	err := store.SetAny("mykey", value, 5, SessionOptions{})
+	err := store.SetAny("my.key", value, 5, SessionOptions{
+		UserID:    "123456",
+		UserAgent: "UserAgent",
+		IPAddress: "127.0.0.1",
+	})
 
 	if err != nil {
 		t.Fatalf("Set JSON failed: " + err.Error())
 	}
 
-	result, err := store.GetAny("mykey", "{}", SessionOptions{})
+	result, err := store.GetAny("my.key", "{}", SessionOptions{
+		UserID:    "123456",
+		UserAgent: "UserAgent",
+		IPAddress: "127.0.0.1",
+	})
 
 	if err != nil {
 		t.Fatalf("Get JSON failed: " + err.Error())
@@ -261,7 +293,11 @@ func TestHas(t *testing.T) {
 		AutomigrateEnabled: true,
 	})
 
-	hasNo, err := store.Has("mykey", SessionOptions{})
+	hasNo, err := store.Has("mykey", SessionOptions{
+		UserID:    "123456",
+		UserAgent: "UserAgent",
+		IPAddress: "127.0.0.1",
+	})
 
 	if err != nil {
 		t.Fatalf("Has no failed: " + err.Error())
@@ -271,13 +307,21 @@ func TestHas(t *testing.T) {
 		t.Fatal("Has no failed: ", hasNo)
 	}
 
-	errSet := store.Set("mykey", "test", 5, SessionOptions{})
+	errSet := store.Set("mykey", "test", 5, SessionOptions{
+		UserID:    "123456",
+		UserAgent: "UserAgent",
+		IPAddress: "127.0.0.1",
+	})
 
 	if errSet != nil {
 		t.Fatalf("Set failed: " + errSet.Error())
 	}
 
-	has, err := store.Has("mykey", SessionOptions{})
+	has, err := store.Has("mykey", SessionOptions{
+		UserID:    "123456",
+		UserAgent: "UserAgent",
+		IPAddress: "127.0.0.1",
+	})
 
 	if err != nil {
 		t.Fatalf("Has failed: " + err.Error())

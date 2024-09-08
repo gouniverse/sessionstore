@@ -97,22 +97,34 @@ func (st *Store) ExpireSessionGoroutine() error {
 		if st.debugEnabled {
 			log.Println("Cleaning expired sessions...")
 		}
-		sqlStr, _, _ := goqu.Dialect(st.dbDriverName).From(st.sessionTableName).Where(goqu.C("expires_at").Lt(time.Now())).Delete().ToSQL()
+		sqlStr, sqlParams, err := goqu.Dialect(st.dbDriverName).
+			From(st.sessionTableName).
+			Where(goqu.C(COLUMN_EXPIRES_AT).Lt(time.Now())).
+			Delete().
+			Prepared(true).
+			ToSQL()
+
+		if err != nil {
+			return err
+		}
 
 		if st.debugEnabled {
 			log.Println(sqlStr)
 		}
 
-		_, err := st.db.Exec(sqlStr)
+		_, err = st.db.Exec(sqlStr, sqlParams...)
+
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// Looks like this is now outdated for sqlscan
 				return nil
 			}
+
 			if sqlscan.NotFound(err) {
 				return nil
 			}
-			log.Println("Cache Store. ExpireSessionGoroutine. Error: ", err)
+
+			log.Println("Session Store. ExpireSessionGoroutine. Error: ", err)
 			return nil
 		}
 
@@ -135,7 +147,7 @@ func (st *Store) Extend(sessionKey string, seconds int64, options SessionOptions
 
 	session.ExpiresAt = &expiresAt
 
-	err := st.sessionUpdate(*session)
+	err := st.sessionUpdate(*session, options)
 
 	if err != nil {
 		return err
@@ -146,13 +158,25 @@ func (st *Store) Extend(sessionKey string, seconds int64, options SessionOptions
 
 // Delete deletes a session
 func (st *Store) Delete(sessionKey string, options SessionOptions) (bool, error) {
-	sqlStr, _, _ := goqu.Dialect(st.dbDriverName).From(st.sessionTableName).Where(goqu.C("session_key").Eq(sessionKey)).Delete().ToSQL()
+	sqlStr, sqlParams, err := goqu.Dialect(st.dbDriverName).
+		From(st.sessionTableName).
+		Where(goqu.C(COLUMN_SESSION_KEY).Eq(sessionKey)).
+		Where(goqu.C(COLUMN_USER_ID).Eq(options.UserID)).
+		Where(goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent)).
+		Where(goqu.C(COLUMN_IP_ADDRESS).Eq(options.IPAddress)).
+		Delete().
+		Prepared(true).
+		ToSQL()
+
+	if err != nil {
+		return false, err
+	}
 
 	if st.debugEnabled {
 		log.Println(sqlStr)
 	}
 
-	_, err := st.db.Exec(sqlStr)
+	_, err = st.db.Exec(sqlStr, sqlParams...)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -175,7 +199,12 @@ func (st *Store) FindByKey(sessionKey string, options SessionOptions) (*Session,
 	// key exists, expires is < now, deleted null
 	sqlStr, _, sqlErr := goqu.Dialect(st.dbDriverName).
 		From(st.sessionTableName).
-		Where(goqu.C("session_key").Eq(sessionKey), goqu.C("expires_at").Gt(time.Now()), goqu.C("deleted_at").Eq(time.Time{})).
+		Where(goqu.C(COLUMN_SESSION_KEY).Eq(sessionKey)).
+		Where(goqu.C(COLUMN_EXPIRES_AT).Gt(time.Now())).
+		Where(goqu.C(COLUMN_DELETED_AT).Eq(time.Time{})).
+		Where(goqu.C(COLUMN_USER_ID).Eq(options.UserID)).
+		Where(goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent)).
+		Where(goqu.C(COLUMN_IP_ADDRESS).Eq(options.IPAddress)).
 		Select("*").
 		ToSQL()
 
@@ -269,7 +298,12 @@ func (st *Store) Has(sessionKey string, options SessionOptions) (bool, error) {
 	// key exists, expires is < now, deleted null
 	sqlStr, _, sqlErr := goqu.Dialect(st.dbDriverName).
 		From(st.sessionTableName).
-		Where(goqu.C("session_key").Eq(sessionKey), goqu.C("expires_at").Gt(time.Now()), goqu.C("deleted_at").Eq(time.Time{})).
+		Where(goqu.C(COLUMN_SESSION_KEY).Eq(sessionKey)).
+		Where(goqu.C(COLUMN_EXPIRES_AT).Gt(time.Now())).
+		Where(goqu.C(COLUMN_DELETED_AT).Eq(time.Time{})).
+		Where(goqu.C(COLUMN_USER_ID).Eq(options.UserID)).
+		Where(goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent)).
+		Where(goqu.C(COLUMN_IP_ADDRESS).Eq(options.IPAddress)).
 		Select(goqu.COUNT("*")).As("count").
 		ToSQL()
 
@@ -314,7 +348,7 @@ func (st *Store) MergeMap(key string, mergeMap map[string]any, seconds int64, op
 	}
 
 	if currentMap == nil {
-		return errors.New("nil found")
+		return errors.New("sessionstore. nil found")
 	}
 
 	for mapKey, mapValue := range mergeMap {
@@ -347,15 +381,20 @@ func (st *Store) sessionCreate(session Session) error {
 	return nil
 }
 
-func (st *Store) sessionUpdate(session Session) error {
+func (st *Store) sessionUpdate(session Session, options SessionOptions) error {
 	fields := map[string]interface{}{}
-	fields["session_value"] = session.Value
-	fields["expires_at"] = session.ExpiresAt
-	fields["updated_at"] = time.Now()
+	fields[COLUMN_SESSION_VALUE] = session.Value
+	fields[COLUMN_EXPIRES_AT] = session.ExpiresAt
+	fields[COLUMN_UPDATED_AT] = time.Now()
 
 	sqlStr, _, sqlErr := goqu.Dialect(st.dbDriverName).
 		Update(st.sessionTableName).
-		Where(goqu.C("session_key").Eq(session.Key), goqu.C("expires_at").Gt(time.Now()), goqu.C("deleted_at").Eq(time.Time{})).
+		Where(goqu.C(COLUMN_SESSION_KEY).Eq(session.Key)).
+		Where(goqu.C(COLUMN_EXPIRES_AT).Gt(time.Now())).
+		Where(goqu.C(COLUMN_DELETED_AT).Eq(time.Time{})).
+		Where(goqu.C(COLUMN_USER_ID).Eq(options.UserID)).
+		Where(goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent)).
+		Where(goqu.C(COLUMN_IP_ADDRESS).Eq(options.IPAddress)).
 		Set(fields).
 		ToSQL()
 
@@ -391,6 +430,9 @@ func (st *Store) Set(sessionKey string, value string, seconds int64, options Ses
 			ID:        uid.MicroUid(),
 			Key:       sessionKey,
 			Value:     value,
+			UserID:    options.UserID,
+			UserAgent: options.UserAgent,
+			IPAddress: options.IPAddress,
 			ExpiresAt: &expiresAt,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -403,7 +445,7 @@ func (st *Store) Set(sessionKey string, value string, seconds int64, options Ses
 		session.ExpiresAt = &expiresAt
 		session.UpdatedAt = time.Now()
 
-		return st.sessionUpdate(*session)
+		return st.sessionUpdate(*session, options)
 	}
 }
 
