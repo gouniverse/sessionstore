@@ -8,6 +8,7 @@ import (
 
 	// "time"
 
+	"github.com/dromara/carbon/v2"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -83,14 +84,10 @@ func TestSessionDelete(t *testing.T) {
 
 	store.Set(sessionKey, "123456", 5, SessionOptions{})
 
-	isDeleted, err := store.Delete(sessionKey, SessionOptions{})
+	err := store.Delete(sessionKey, SessionOptions{})
 
 	if err != nil {
 		t.Fatalf("Session could not be deleted: " + err.Error())
-	}
-
-	if !isDeleted {
-		t.Fatalf("Session delete key should return true on success")
 	}
 
 	session, errFind := store.FindByKey(sessionKey, SessionOptions{})
@@ -123,13 +120,17 @@ func TestStoreEnableDebug(t *testing.T) {
 func TestSetKey(t *testing.T) {
 	db := InitDB("test_session_set_key.db")
 
-	store, _ := NewStore(NewStoreOptions{
+	store, err := NewStore(NewStoreOptions{
 		DB:                 db,
 		SessionTableName:   "session_set_key",
 		AutomigrateEnabled: true,
 	})
 
-	err := store.Set("hello", "world", 1, SessionOptions{
+	if err != nil {
+		t.Fatal("Store could not be created: ", err.Error())
+	}
+
+	err = store.Set("hello", "world", 600, SessionOptions{
 		UserID:    "123456",
 		UserAgent: "UserAgent",
 		IPAddress: "127.0.0.1",
@@ -213,20 +214,20 @@ func TestUpdateKey(t *testing.T) {
 		t.Fatalf("Session 2 not found")
 	}
 
-	if session2.Value != "world" {
-		t.Fatal("Value not correct:", session2.Value)
+	if session2.GetValue() != "world" {
+		t.Fatal("Value not correct:", session2.GetValue())
 	}
 
-	if session2.Key != "hello" {
-		t.Fatal("Key not correct:", session2.Key)
+	if session2.GetKey() != "hello" {
+		t.Fatal("Key not correct:", session2.GetKey())
 	}
 
-	if session2.UpdatedAt == session1.CreatedAt {
-		t.Fatal("Updated at should be different from created at date:", session2.UpdatedAt.Format(time.UnixDate))
+	if session2.GetUpdatedAt() == session1.GetUpdatedAt() {
+		t.Fatal("Updated at should be different from created at date:", session2.GetUpdatedAt())
 	}
 
-	if session2.UpdatedAt.Sub(session1.CreatedAt).Seconds() < 1 {
-		t.Fatal("Updated at should more than 1 second after created at date:", session2.UpdatedAt.Format(time.UnixDate), " - ", session1.CreatedAt.Format(time.UnixDate))
+	if session2.GetUpdatedAtCarbon().DiffAbsInSeconds(session1.GetCreatedAtCarbon()) < 1 {
+		t.Fatal("Updated at should more than 1 second after created at date:", session2.GetUpdatedAt(), " - ", session1.GetCreatedAt())
 	}
 }
 
@@ -378,18 +379,22 @@ func TestSetGetMap(t *testing.T) {
 func TestMergeMap(t *testing.T) {
 	db := InitDB("test_session_map_merge.db")
 
-	store, _ := NewStore(NewStoreOptions{
+	store, err := NewStore(NewStoreOptions{
 		DB:                 db,
 		SessionTableName:   "session_map_merge",
 		AutomigrateEnabled: true,
 	})
+
+	if err != nil {
+		t.Fatalf("NewStore failed: " + err.Error())
+	}
 
 	value := map[string]any{
 		"key1": "value1",
 		"key2": "value2",
 		"key3": "value3",
 	}
-	err := store.SetMap("mykey", value, 5, SessionOptions{})
+	err = store.SetMap("mykey", value, 600, SessionOptions{})
 
 	if err != nil {
 		t.Fatalf("Set Map failed: " + err.Error())
@@ -400,7 +405,7 @@ func TestMergeMap(t *testing.T) {
 		"key3": "value33",
 	}
 
-	err = store.MergeMap("mykey", valueMerge, 5, SessionOptions{})
+	err = store.MergeMap("mykey", valueMerge, 600, SessionOptions{})
 
 	if err != nil {
 		t.Fatalf("Merge Map failed: " + err.Error())
@@ -450,26 +455,28 @@ func TestExtend(t *testing.T) {
 		t.Fatal("Extend failed: " + err.Error())
 	}
 
-	session, err := store.FindByKey("mykey", SessionOptions{})
+	sessionExtended, err := store.FindByKey("mykey", SessionOptions{})
 
 	if err != nil {
 		t.Fatal("Extend failed: " + err.Error())
 	}
 
-	if session == nil {
+	if sessionExtended == nil {
 		t.Fatal("Extend failed. Session is NIL")
 	}
 
-	if session.Value != "test" {
-		t.Fatal("Extend failed. Value is wrong", session.Value)
+	if sessionExtended.GetValue() != "test" {
+		t.Fatal("Extend failed. Value is wrong", sessionExtended.GetValue())
 	}
 
-	if session.ExpiresAt.Before(time.Now().Add(90 * time.Second)) {
-		t.Fatal("Extend failed. ExpiresAt must be more than 90 seconds", session.ExpiresAt)
+	diff := sessionExtended.GetExpiresAtCarbon().DiffAbsInSeconds(carbon.Now(carbon.UTC))
+
+	if diff < 90 {
+		t.Fatal("Extend failed. ExpiresAt must be more than 90 seconds", sessionExtended.GetExpiresAt(), diff)
 	}
 
-	if !session.ExpiresAt.Before(time.Now().Add(110 * time.Second)) {
-		t.Fatal("Extend failed. ExpiresAt must be less than 110 seconds", session.ExpiresAt)
+	if diff > 110 {
+		t.Fatal("Extend failed. ExpiresAt must be less than 110 seconds", sessionExtended.GetExpiresAt(), diff)
 	}
 
 }
