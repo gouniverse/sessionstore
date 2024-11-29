@@ -8,6 +8,8 @@ type SessionInterface interface {
 	DataChanged() map[string]string
 	MarkAsNotDirty()
 
+	IsSoftDeleted() bool
+
 	GetID() string
 	SetID(ID string) *Session
 

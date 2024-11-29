@@ -3,16 +3,18 @@ package sessionstore
 import (
 	"database/sql"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
 	// "time"
 
 	"github.com/dromara/carbon/v2"
+	"github.com/gouniverse/sb"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func InitDB(filepath string) *sql.DB {
+func initDB(filepath string) *sql.DB {
 	os.Remove(filepath) // remove database
 	dsn := filepath + "?parseTime=true"
 	db, err := sql.Open("sqlite3", dsn)
@@ -25,7 +27,7 @@ func InitDB(filepath string) *sql.DB {
 }
 
 func TestStoreCreate(t *testing.T) {
-	db := InitDB("test_session_store_create.db")
+	db := initDB("test_session_store_create.db")
 
 	store, err := NewStore(NewStoreOptions{
 		DB:                 db,
@@ -50,7 +52,7 @@ func TestStoreCreate(t *testing.T) {
 }
 
 func TestStoreAutomigrate(t *testing.T) {
-	db := InitDB("test_session_automigrate.db")
+	db := initDB("test_session_automigrate.db")
 
 	store, _ := NewStore(NewStoreOptions{
 		DB:                 db,
@@ -72,7 +74,7 @@ func TestStoreAutomigrate(t *testing.T) {
 }
 
 func TestSessionDelete(t *testing.T) {
-	db := InitDB("test_session_delete.db")
+	db := initDB("test_session_delete.db")
 
 	store, _ := NewStore(NewStoreOptions{
 		DB:                 db,
@@ -102,7 +104,7 @@ func TestSessionDelete(t *testing.T) {
 }
 
 func TestStoreEnableDebug(t *testing.T) {
-	db := InitDB("test_session_debug.db")
+	db := initDB("test_session_debug.db")
 
 	store, _ := NewStore(NewStoreOptions{
 		DB:               db,
@@ -118,7 +120,7 @@ func TestStoreEnableDebug(t *testing.T) {
 }
 
 func TestSetKey(t *testing.T) {
-	db := InitDB("test_session_set_key.db")
+	db := initDB("test_session_set_key.db")
 
 	store, err := NewStore(NewStoreOptions{
 		DB:                 db,
@@ -156,7 +158,7 @@ func TestSetKey(t *testing.T) {
 }
 
 func TestUpdateKey(t *testing.T) {
-	db := InitDB("test_session_update_key.db")
+	db := initDB("test_session_update_key.db")
 
 	store, _ := NewStore(NewStoreOptions{
 		DB:                 db,
@@ -232,7 +234,7 @@ func TestUpdateKey(t *testing.T) {
 }
 
 func TestSetGetAny(t *testing.T) {
-	db := InitDB("test_session_json.db")
+	db := initDB("test_session_json.db")
 
 	store, _ := NewStore(NewStoreOptions{
 		DB:                 db,
@@ -286,7 +288,7 @@ func TestSetGetAny(t *testing.T) {
 }
 
 func TestHas(t *testing.T) {
-	db := InitDB("test_session_has.db")
+	db := initDB("test_session_has.db")
 
 	store, _ := NewStore(NewStoreOptions{
 		DB:                 db,
@@ -334,7 +336,7 @@ func TestHas(t *testing.T) {
 }
 
 func TestSetGetMap(t *testing.T) {
-	db := InitDB("test_session_map.db")
+	db := initDB("test_session_map.db")
 
 	store, _ := NewStore(NewStoreOptions{
 		DB:                 db,
@@ -377,7 +379,7 @@ func TestSetGetMap(t *testing.T) {
 }
 
 func TestMergeMap(t *testing.T) {
-	db := InitDB("test_session_map_merge.db")
+	db := initDB("test_session_map_merge.db")
 
 	store, err := NewStore(NewStoreOptions{
 		DB:                 db,
@@ -435,15 +437,19 @@ func TestMergeMap(t *testing.T) {
 }
 
 func TestExtend(t *testing.T) {
-	db := InitDB("test_session_extend.db")
+	db := initDB("test_session_extend.db")
 
-	store, _ := NewStore(NewStoreOptions{
+	store, err := NewStore(NewStoreOptions{
 		DB:                 db,
 		SessionTableName:   "session_extend",
 		AutomigrateEnabled: true,
 	})
 
-	err := store.Set("mykey", "test", 5, SessionOptions{})
+	if err != nil {
+		t.Fatal("NewStore failed: " + err.Error())
+	}
+
+	err = store.Set("mykey", "test", 5, SessionOptions{})
 
 	if err != nil {
 		t.Fatal("Set failed: " + err.Error())
@@ -479,4 +485,322 @@ func TestExtend(t *testing.T) {
 		t.Fatal("Extend failed. ExpiresAt must be less than 110 seconds", sessionExtended.GetExpiresAt(), diff)
 	}
 
+}
+
+func TestStoreSessionCreate(t *testing.T) {
+	db := initDB(":memory:")
+
+	store, err := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_create",
+		AutomigrateEnabled: true,
+	})
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	if store == nil {
+		t.Fatal("unexpected nil store")
+	}
+
+	session := NewSession()
+
+	if session == nil {
+		t.Fatal("unexpected nil session")
+	}
+
+	if session.GetID() == "" {
+		t.Fatal("unexpected empty id:", session.GetID())
+	}
+
+	if len(session.GetID()) != 32 {
+		t.Fatal("unexpected id length:", len(session.GetID()))
+	}
+
+	if session.GetKey() == "" {
+		t.Fatal("unexpected empty key:", session.GetKey())
+	}
+
+	if len(session.GetKey()) != 100 {
+		t.Fatal("unexpected key length:", len(session.GetKey()))
+	}
+
+	err = store.SessionCreate(session)
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+}
+
+func TestStoreSessionSoftDelete(t *testing.T) {
+	db := initDB(":memory:")
+
+	store, err := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_soft_delete",
+		AutomigrateEnabled: true,
+	})
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	if store == nil {
+		t.Fatal("unexpected nil store")
+	}
+
+	session := NewSession()
+
+	err = store.SessionCreate(session)
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	err = store.SessionSoftDeleteByID(session.GetID())
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	if session.GetSoftDeletedAt() != sb.MAX_DATETIME {
+		t.Fatal("Session MUST NOT be soft deleted")
+	}
+
+	sessionFound, errFind := store.SessionFindByID(session.GetID())
+
+	if errFind != nil {
+		t.Fatal("unexpected error:", errFind)
+	}
+
+	if sessionFound != nil {
+		t.Fatal("Session MUST be nil")
+	}
+
+	sessionFindWithSoftDeleted, err := store.SessionList(SessionQuery().
+		SetID(session.GetID()).
+		SetSoftDeletedIncluded(true).
+		SetLimit(1))
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	if len(sessionFindWithSoftDeleted) == 0 {
+		t.Fatal("Exam MUST be soft deleted")
+	}
+
+	if strings.Contains(sessionFindWithSoftDeleted[0].GetSoftDeletedAt(), sb.MAX_DATETIME) {
+		t.Fatal("Session MUST be soft deleted", session.GetSoftDeletedAt())
+	}
+
+	if !sessionFindWithSoftDeleted[0].IsSoftDeleted() {
+		t.Fatal("Session MUST be soft deleted")
+	}
+}
+
+func TestStoreSessionDelete(t *testing.T) {
+	db := initDB(":memory:")
+
+	store, err := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_delete",
+		AutomigrateEnabled: true,
+	})
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	if store == nil {
+		t.Fatal("unexpected nil store")
+	}
+
+	session := NewSession()
+
+	err = store.SessionCreate(session)
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	err = store.SessionDeleteByID(session.GetID())
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	sessionFindWithDeleted, err := store.SessionList(SessionQuery().
+		SetID(session.GetID()).
+		SetLimit(1).
+		SetSoftDeletedIncluded(true))
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	if len(sessionFindWithDeleted) != 0 {
+		t.Fatal("Session MUST be deleted, but it is not")
+	}
+}
+
+func TestStoreSessionFindByID(t *testing.T) {
+	db := initDB(":memory:")
+
+	store, err := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_find_by_id",
+		AutomigrateEnabled: true,
+	})
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	session := NewSession().
+		SetValue("one two three four")
+
+	if session == nil {
+		t.Fatal("unexpected nil session")
+	}
+
+	if session.GetID() == "" {
+		t.Fatal("unexpected empty id:", session.GetID())
+	}
+
+	err = store.SessionCreate(session)
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	sessionFound, errFind := store.SessionFindByID(session.GetID())
+
+	if errFind != nil {
+		t.Fatal("unexpected error:", errFind)
+	}
+
+	if sessionFound == nil {
+		t.Fatal("Session MUST NOT be nil")
+	}
+
+	if sessionFound.GetID() != session.GetID() {
+		t.Fatal("IDs do not match")
+	}
+
+	if sessionFound.GetValue() != session.GetValue() {
+		t.Fatal("Values do not match")
+	}
+
+	if sessionFound.GetValue() != "one two three four" {
+		t.Fatal("Values do not match")
+	}
+}
+
+func TestStoreSessionFindByKey(t *testing.T) {
+	db := initDB(":memory:")
+
+	store, err := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_find_by_key",
+		AutomigrateEnabled: true,
+	})
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	session := NewSession().
+		SetValue("one two three four")
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	if session == nil {
+		t.Fatal("unexpected nil session")
+	}
+
+	if session.GetKey() == "" {
+		t.Fatal("unexpected empty key:", session.GetKey())
+	}
+
+	err = store.SessionCreate(session)
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	sessionFound, errFind := store.SessionFindByKey(session.GetKey())
+
+	if errFind != nil {
+		t.Fatal("unexpected error:", errFind)
+	}
+
+	if sessionFound == nil {
+		t.Fatal("Session MUST NOT be nil")
+	}
+
+	if sessionFound.GetID() != session.GetID() {
+		t.Fatal("IDs do not match")
+	}
+
+	if sessionFound.GetValue() != session.GetValue() {
+		t.Fatal("Values do not match")
+	}
+
+	if sessionFound.GetValue() != "one two three four" {
+		t.Fatal("Values do not match")
+	}
+}
+
+func TestStoreSessionUpdate(t *testing.T) {
+	db := initDB(":memory:")
+
+	store, err := NewStore(NewStoreOptions{
+		DB:                 db,
+		SessionTableName:   "session_update",
+		AutomigrateEnabled: true,
+	})
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	if store == nil {
+		t.Fatal("unexpected nil store")
+	}
+
+	session := NewSession()
+
+	err = store.SessionCreate(session)
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	session.SetValue("one two three")
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	err = store.SessionUpdate(session)
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	sessionFound, errFind := store.SessionFindByID(session.GetID())
+
+	if errFind != nil {
+		t.Fatal("unexpected error:", errFind)
+	}
+
+	if sessionFound == nil {
+		t.Fatal("Session MUST NOT be nil")
+	}
+
+	if sessionFound.GetValue() != "one two three" {
+		t.Fatal("Value MUST be 'one two three', found: ", sessionFound.GetValue())
+	}
 }

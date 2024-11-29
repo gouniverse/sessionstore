@@ -18,7 +18,12 @@ type StoreInterface interface {
 	// New API
 	SessionCount(query SessionQueryInterface) (int64, error)
 	SessionCreate(session SessionInterface) error
+	SessionDelete(session SessionInterface) error
+	SessionDeleteByID(sessionID string) error
+	SessionFindByID(sessionID string) (SessionInterface, error)
+	SessionFindByKey(sessionKey string) (SessionInterface, error)
 	SessionList(query SessionQueryInterface) ([]SessionInterface, error)
-	SessionUpdate(session SessionInterface, options SessionOptions) error
-	// SessionDelete(session Session, options SessionOptions) error
+	SessionSoftDelete(session SessionInterface) error
+	SessionSoftDeleteByID(sessionID string) error
+	SessionUpdate(session SessionInterface) error
 }

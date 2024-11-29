@@ -44,6 +44,7 @@ func NewSession() SessionInterface {
 
 	o.SetID(uid.HumanUid()).
 		SetKey(key).
+		SetValue("").
 		SetUserID("").
 		SetUserAgent("").
 		SetIPAddress("").

@@ -166,7 +166,7 @@ func (store *Store) Extend(sessionKey string, seconds int64, options SessionOpti
 
 	session.SetExpiresAt(expiresAt)
 
-	err := store.SessionUpdate(session, options)
+	err := store.SessionUpdate(session)
 
 	if err != nil {
 		return err
@@ -452,6 +452,102 @@ func (st *Store) SessionCreate(session SessionInterface) error {
 	return nil
 }
 
+// SessionDelete deletes a session
+func (store *Store) SessionDelete(session SessionInterface) error {
+	if session == nil {
+		return errors.New("session is nil")
+	}
+
+	return store.SessionDeleteByID(session.GetID())
+}
+
+// SessionDeleteByID deletes a session by id
+func (store *Store) SessionDeleteByID(id string) error {
+	if id == "" {
+		return errors.New("session id is empty")
+	}
+
+	sqlStr, params, errSql := goqu.Dialect(store.dbDriverName).
+		Delete(store.sessionTableName).
+		Prepared(true).
+		Where(goqu.C("id").Eq(id)).
+		ToSQL()
+
+	if errSql != nil {
+		return errSql
+	}
+
+	if store.debugEnabled {
+		log.Println(sqlStr)
+	}
+
+	_, err := store.db.Exec(sqlStr, params...)
+
+	return err
+}
+
+// SessionFindByID finds a session by id
+func (store *Store) SessionFindByID(sessionID string) (SessionInterface, error) {
+	if sessionID == "" {
+		return nil, errors.New("session store > find by id: session id is required")
+	}
+
+	query := SessionQuery().
+		SetID(sessionID).
+		SetExpiresAtGte(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC)).
+		// SetUserAgent(options.UserAgent).
+		// SetUserIpAddress(options.IPAddress).
+		SetLimit(1)
+
+	// Only add the UserID, if specifically requested
+	// if len(options.UserID) > 0 {
+	// 	query.SetUserID(options.UserID)
+	// }
+
+	list, err := store.SessionList(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(list) > 0 {
+		return list[0], nil
+	}
+
+	return nil, nil
+}
+
+// SessionFindByKey finds a session by key
+func (store *Store) SessionFindByKey(sessionKey string) (SessionInterface, error) {
+	if sessionKey == "" {
+		return nil, errors.New("session store > find by key: session key is required")
+	}
+
+	query := SessionQuery().
+		SetKey(sessionKey).
+		SetExpiresAtGte(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC)).
+		// SetUserAgent(options.UserAgent).
+		// SetUserIpAddress(options.IPAddress).
+		SetLimit(1)
+
+	// Only add the UserID, if specifically requested
+	// if len(options.UserID) > 0 {
+	// 	query.SetUserID(options.UserID)
+	// }
+
+	list, err := store.SessionList(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(list) > 0 {
+		return list[0], nil
+	}
+
+	return nil, nil
+}
+
 func (store *Store) SessionList(query SessionQueryInterface) ([]SessionInterface, error) {
 	if query == nil {
 		return []SessionInterface{}, errors.New("at session list > session query is nil")
@@ -499,7 +595,27 @@ func (store *Store) SessionList(query SessionQueryInterface) ([]SessionInterface
 	return list, nil
 }
 
-func (store *Store) SessionUpdate(session SessionInterface, options SessionOptions) error {
+func (store *Store) SessionSoftDelete(session SessionInterface) error {
+	if session == nil {
+		return errors.New("session is nil")
+	}
+
+	session.SetSoftDeletedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
+
+	return store.SessionUpdate(session)
+}
+
+func (store *Store) SessionSoftDeleteByID(id string) error {
+	session, err := store.SessionFindByID(id)
+
+	if err != nil {
+		return err
+	}
+
+	return store.SessionSoftDelete(session)
+}
+
+func (store *Store) SessionUpdate(session SessionInterface) error {
 	if session == nil {
 		return errors.New("sessionstore > session update. session cannot be nil")
 	}
@@ -518,28 +634,29 @@ func (store *Store) SessionUpdate(session SessionInterface, options SessionOptio
 
 	delete(dataChanged, COLUMN_ID) // ID cannot be updated
 
-	fields := map[string]interface{}{}
-	fields[COLUMN_SESSION_VALUE] = session.GetValue()
-	fields[COLUMN_EXPIRES_AT] = session.GetExpiresAt()
-	fields[COLUMN_UPDATED_AT] = carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC)
+	// fields := map[string]interface{}{}
+	// fields[COLUMN_SESSION_VALUE] = session.GetValue()
+	// fields[COLUMN_EXPIRES_AT] = session.GetExpiresAt()
+	// fields[COLUMN_UPDATED_AT] = carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC)
 
-	wheres := []goqu.Expression{
-		goqu.C(COLUMN_SESSION_KEY).Eq(session.GetKey()),
-		goqu.C(COLUMN_EXPIRES_AT).Gte(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC)),
-		goqu.C(COLUMN_SOFT_DELETED_AT).Gte(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC)),
-		goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent),
-		goqu.C(COLUMN_IP_ADDRESS).Eq(options.IPAddress),
-	}
+	// wheres := []goqu.Expression{
+	// 	goqu.C(COLUMN_SESSION_KEY).Eq(session.GetKey()),
+	// 	goqu.C(COLUMN_EXPIRES_AT).Gte(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC)),
+	// 	goqu.C(COLUMN_SOFT_DELETED_AT).Gte(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC)),
+	// 	goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent),
+	// 	goqu.C(COLUMN_IP_ADDRESS).Eq(options.IPAddress),
+	// }
 
-	// Only add the condition, if specifically requested
-	if len(options.UserID) > 0 {
-		wheres = append(wheres, goqu.C(COLUMN_USER_ID).Eq(options.UserID))
-	}
+	// // Only add the condition, if specifically requested
+	// if len(options.UserID) > 0 {
+	// 	wheres = append(wheres, goqu.C(COLUMN_USER_ID).Eq(options.UserID))
+	// }
 
 	sqlStr, sqlParams, sqlErr := goqu.Dialect(store.dbDriverName).
 		Update(store.sessionTableName).
 		Prepared(true).
-		Where(wheres...).
+		Where(goqu.C(COLUMN_SESSION_KEY).Eq(session.GetKey())).
+		Where(goqu.C(COLUMN_ID).Eq(session.GetID())).
 		Set(dataChanged).
 		ToSQL()
 
@@ -585,7 +702,7 @@ func (st *Store) Set(sessionKey string, value string, seconds int64, options Ses
 		session.SetExpiresAt(expiresAt)
 		session.SetUpdatedAt(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC))
 
-		return st.SessionUpdate(session, options)
+		return st.SessionUpdate(session)
 	}
 }
 
