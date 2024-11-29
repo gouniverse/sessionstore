@@ -8,6 +8,7 @@ type SessionInterface interface {
 	DataChanged() map[string]string
 	MarkAsNotDirty()
 
+	IsExpired() bool
 	IsSoftDeleted() bool
 
 	GetID() string
