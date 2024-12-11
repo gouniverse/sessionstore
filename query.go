@@ -74,7 +74,13 @@ type SessionQueryInterface interface {
 	SetSoftDeletedIncluded(withSoftDeleted bool) SessionQueryInterface
 }
 
+// SessionQuery is a shortcut version of NewSessionQuery to create a new query
 func SessionQuery() SessionQueryInterface {
+	return NewSessionQuery()
+}
+
+// NewSessionQuery creates a new session query
+func NewSessionQuery() SessionQueryInterface {
 	return &sessionQuery{
 		properties: make(map[string]interface{}),
 	}

@@ -4,12 +4,17 @@ import "github.com/dromara/carbon/v2"
 
 type SessionInterface interface {
 	// From data object
+
 	Data() map[string]string
 	DataChanged() map[string]string
 	MarkAsNotDirty()
 
+	// Methods
+
 	IsExpired() bool
 	IsSoftDeleted() bool
+
+	// Setters and Getters
 
 	GetID() string
 	SetID(ID string) *Session

@@ -13,16 +13,15 @@ require (
 
 require (
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gouniverse/base v0.0.5 // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
-	golang.org/x/crypto v0.29.0 // indirect
-	golang.org/x/text v0.20.0 // indirect
+	github.com/gouniverse/base v0.1.0 // indirect
+	golang.org/x/crypto v0.30.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 )
 
 require (
-	github.com/dromara/carbon/v2 v2.5.1
+	github.com/dromara/carbon/v2 v2.5.2
 	github.com/gouniverse/maputils v0.7.0 // indirect
-	github.com/gouniverse/sb v0.7.0
-	github.com/samber/lo v1.47.0 // indirect
+	github.com/gouniverse/sb v0.8.0
+	github.com/samber/lo v1.47.0
 	github.com/spf13/cast v1.7.0
 )
