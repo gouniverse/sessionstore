@@ -44,13 +44,18 @@ session := NewSession().
   SetUserID(userID).
   SetUserAgent(r.UserAgent()).
   SetIPAddress(r.RemoteAddr).
-  SetExpiresAt(expiresAt)
+  SetExpiresAt(carbon.Now(carbon.UTC).AddSeconds(sessionExpireSeconds).ToDateTimeString(carbon.UTC))
 
-// Create new / update existing session
+// Create new
 err := sessionStore.SessionCreate(session)
 
 // Get session value, or default if not found
 session, err := sessionStore.SessionFindByKey(sessionKey)
+
+// Update session
+session.SetValue(newSessionValue)
+session.SetExpiresAt(carbon.Now(carbon.UTC).AddMinutes(60).ToDateTimeString(carbon.UTC))
+err := sessionStore.SessionUpdate(session)
 
 // Delete session
 err := sessionStore.SessionDeleteByKey(sessionKey)
@@ -59,7 +64,7 @@ err := sessionStore.SessionDeleteByKey(sessionKey)
 
 ## Changelog
 
-2024.12.11 - Removed old API
+2024.12.11 - Removed old API, extended interface
 
 2024.09.08 - Added options (UserID, UserAgent, IPAddress)
 

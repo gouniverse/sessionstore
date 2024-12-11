@@ -3,6 +3,7 @@ package sessionstore
 type StoreInterface interface {
 	AutoMigrate() error
 	EnableDebug(debug bool)
+	SessionExpiryGoroutine() error
 
 	// Old API
 	// Extend(sessionKey string, seconds int64, options SessionOptions) error

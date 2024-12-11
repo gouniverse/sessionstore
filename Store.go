@@ -67,8 +67,8 @@ func (st *store) EnableDebug(debug bool) {
 	st.debugEnabled = debug
 }
 
-// ExpireSessionGoroutine - soft deletes expired sessions
-func (st *store) ExpireSessionGoroutine() error {
+// SessionExpiryGoroutine - soft deletes expired sessions
+func (st *store) SessionExpiryGoroutine() error {
 	i := 0
 	for {
 		i++
