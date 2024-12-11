@@ -55,7 +55,7 @@ func initStore(filepath string) (StoreInterface, error) {
 	return store, nil
 }
 
-func TestStoreCreate(t *testing.T) {
+func TestStore_Create(t *testing.T) {
 	store, err := initStore(":memory:")
 
 	if err != nil {
@@ -67,7 +67,7 @@ func TestStoreCreate(t *testing.T) {
 	}
 }
 
-func TestStoreAutomigrate(t *testing.T) {
+func TestStore_Automigrate(t *testing.T) {
 	store, err := initStore(":memory:")
 
 	if err != nil {
@@ -109,7 +109,7 @@ func TestStoreAutomigrate(t *testing.T) {
 // 	}
 // }
 
-func TestStoreEnableDebug(t *testing.T) {
+func TestStore_EnableDebug(t *testing.T) {
 	store, err := initStore(":memory:")
 
 	if err != nil {
@@ -467,7 +467,7 @@ func TestStoreEnableDebug(t *testing.T) {
 
 // }
 
-func TestStoreSessionCreate(t *testing.T) {
+func TestStore_SessionCreate(t *testing.T) {
 	store, err := initStore(":memory:")
 
 	if err != nil {
@@ -503,7 +503,221 @@ func TestStoreSessionCreate(t *testing.T) {
 	}
 }
 
-func TestStoreSessionSoftDelete(t *testing.T) {
+func TestStore_SessionDelete(t *testing.T) {
+	store, err := initStore(":memory:")
+
+	if err != nil {
+		t.Fatal("Store could not be created: ", err.Error())
+	}
+
+	session := NewSession()
+
+	err = store.SessionCreate(session)
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	err = store.SessionDeleteByID(session.GetID())
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	sessionFindWithDeleted, err := store.SessionList(SessionQuery().
+		SetID(session.GetID()).
+		SetLimit(1).
+		SetSoftDeletedIncluded(true))
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	if len(sessionFindWithDeleted) != 0 {
+		t.Fatal("Session MUST be deleted, but it is not")
+	}
+}
+
+func TestStore_SessionDeleteByID(t *testing.T) {
+	store, err := initStore(":memory:")
+
+	if err != nil {
+		t.Fatal("Store could not be created: ", err.Error())
+	}
+
+	session := NewSession().
+		SetValue("one two three four")
+
+	if session == nil {
+		t.Fatal("unexpected nil session")
+	}
+
+	if session.GetID() == "" {
+		t.Fatal("unexpected empty id:", session.GetID())
+	}
+
+	err = store.SessionCreate(session)
+
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	err = store.SessionDeleteByID(session.GetID())
+
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	sessionFindWithDeleted, err := store.SessionList(SessionQuery().
+		SetID(session.GetID()).
+		SetLimit(1).
+		SetSoftDeletedIncluded(true))
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	if len(sessionFindWithDeleted) != 0 {
+		t.Fatal("Session MUST be deleted, but it is not")
+	}
+}
+
+func TestStore_SessionFindByID(t *testing.T) {
+	store, err := initStore(":memory:")
+
+	if err != nil {
+		t.Fatal("Store could not be created: ", err.Error())
+	}
+
+	session := NewSession().
+		SetValue("one two three four")
+
+	if session == nil {
+		t.Fatal("unexpected nil session")
+	}
+
+	if session.GetID() == "" {
+		t.Fatal("unexpected empty id:", session.GetID())
+	}
+
+	err = store.SessionCreate(session)
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	sessionFound, errFind := store.SessionFindByID(session.GetID())
+
+	if errFind != nil {
+		t.Fatal("unexpected error:", errFind)
+	}
+
+	if sessionFound == nil {
+		t.Fatal("Session MUST NOT be nil")
+	}
+
+	if sessionFound.GetID() != session.GetID() {
+		t.Fatal("IDs do not match")
+	}
+
+	if sessionFound.GetValue() != session.GetValue() {
+		t.Fatal("Values do not match")
+	}
+
+	if sessionFound.GetValue() != "one two three four" {
+		t.Fatal("Values do not match")
+	}
+}
+
+func TestStore_SessionFindByKey(t *testing.T) {
+	store, err := initStore(":memory:")
+
+	if err != nil {
+		t.Fatal("Store could not be created: ", err.Error())
+	}
+
+	session := NewSession().
+		SetValue("one two three four")
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	if session == nil {
+		t.Fatal("unexpected nil session")
+	}
+
+	if session.GetKey() == "" {
+		t.Fatal("unexpected empty key:", session.GetKey())
+	}
+
+	err = store.SessionCreate(session)
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	sessionFound, errFind := store.SessionFindByKey(session.GetKey())
+
+	if errFind != nil {
+		t.Fatal("unexpected error:", errFind)
+	}
+
+	if sessionFound == nil {
+		t.Fatal("Session MUST NOT be nil")
+	}
+
+	if sessionFound.GetID() != session.GetID() {
+		t.Fatal("IDs do not match")
+	}
+
+	if sessionFound.GetValue() != session.GetValue() {
+		t.Fatal("Values do not match")
+	}
+
+	if sessionFound.GetValue() != "one two three four" {
+		t.Fatal("Values do not match")
+	}
+}
+
+func TestStore_SessionList(t *testing.T) {
+	store, err := initStore(":memory:")
+
+	if err != nil {
+		t.Fatal("Store could not be created: ", err.Error())
+	}
+
+	session1 := NewSession().
+		SetUserID("1").
+		SetValue("one two three")
+
+	session2 := NewSession().
+		SetUserID("2").
+		SetValue("four five six")
+
+	session3 := NewSession().
+		SetUserID("3").
+		SetValue("seven eight nine")
+
+	for _, session := range []SessionInterface{session1, session2, session3} {
+		err = store.SessionCreate(session)
+		if err != nil {
+			t.Error("unexpected error:", err)
+		}
+	}
+
+	sessionList, errList := store.SessionList(SessionQuery().
+		SetUserID("2").
+		SetLimit(2))
+
+	if errList != nil {
+		t.Fatal("unexpected error:", errList)
+	}
+
+	if len(sessionList) != 1 {
+		t.Fatal("unexpected session list length:", len(sessionList))
+	}
+}
+
+func TestStore_SessionSoftDelete(t *testing.T) {
 	store, err := initStore(":memory:")
 
 	if err != nil {
@@ -560,138 +774,7 @@ func TestStoreSessionSoftDelete(t *testing.T) {
 	}
 }
 
-func TestStoreSessionDelete(t *testing.T) {
-	store, err := initStore(":memory:")
-
-	if err != nil {
-		t.Fatal("Store could not be created: ", err.Error())
-	}
-
-	session := NewSession()
-
-	err = store.SessionCreate(session)
-
-	if err != nil {
-		t.Fatal("unexpected error:", err)
-	}
-
-	err = store.SessionDeleteByID(session.GetID())
-
-	if err != nil {
-		t.Fatal("unexpected error:", err)
-	}
-
-	sessionFindWithDeleted, err := store.SessionList(SessionQuery().
-		SetID(session.GetID()).
-		SetLimit(1).
-		SetSoftDeletedIncluded(true))
-
-	if err != nil {
-		t.Fatal("unexpected error:", err)
-	}
-
-	if len(sessionFindWithDeleted) != 0 {
-		t.Fatal("Session MUST be deleted, but it is not")
-	}
-}
-
-func TestStoreSessionFindByID(t *testing.T) {
-	store, err := initStore(":memory:")
-
-	if err != nil {
-		t.Fatal("Store could not be created: ", err.Error())
-	}
-
-	session := NewSession().
-		SetValue("one two three four")
-
-	if session == nil {
-		t.Fatal("unexpected nil session")
-	}
-
-	if session.GetID() == "" {
-		t.Fatal("unexpected empty id:", session.GetID())
-	}
-
-	err = store.SessionCreate(session)
-	if err != nil {
-		t.Error("unexpected error:", err)
-	}
-
-	sessionFound, errFind := store.SessionFindByID(session.GetID())
-
-	if errFind != nil {
-		t.Fatal("unexpected error:", errFind)
-	}
-
-	if sessionFound == nil {
-		t.Fatal("Session MUST NOT be nil")
-	}
-
-	if sessionFound.GetID() != session.GetID() {
-		t.Fatal("IDs do not match")
-	}
-
-	if sessionFound.GetValue() != session.GetValue() {
-		t.Fatal("Values do not match")
-	}
-
-	if sessionFound.GetValue() != "one two three four" {
-		t.Fatal("Values do not match")
-	}
-}
-
-func TestStoreSessionFindByKey(t *testing.T) {
-	store, err := initStore(":memory:")
-
-	if err != nil {
-		t.Fatal("Store could not be created: ", err.Error())
-	}
-
-	session := NewSession().
-		SetValue("one two three four")
-
-	if err != nil {
-		t.Fatal("unexpected error:", err)
-	}
-
-	if session == nil {
-		t.Fatal("unexpected nil session")
-	}
-
-	if session.GetKey() == "" {
-		t.Fatal("unexpected empty key:", session.GetKey())
-	}
-
-	err = store.SessionCreate(session)
-	if err != nil {
-		t.Error("unexpected error:", err)
-	}
-
-	sessionFound, errFind := store.SessionFindByKey(session.GetKey())
-
-	if errFind != nil {
-		t.Fatal("unexpected error:", errFind)
-	}
-
-	if sessionFound == nil {
-		t.Fatal("Session MUST NOT be nil")
-	}
-
-	if sessionFound.GetID() != session.GetID() {
-		t.Fatal("IDs do not match")
-	}
-
-	if sessionFound.GetValue() != session.GetValue() {
-		t.Fatal("Values do not match")
-	}
-
-	if sessionFound.GetValue() != "one two three four" {
-		t.Fatal("Values do not match")
-	}
-}
-
-func TestStoreSessionUpdate(t *testing.T) {
+func TestStore_SessionUpdate(t *testing.T) {
 	store, err := initStore(":memory:")
 
 	if err != nil {

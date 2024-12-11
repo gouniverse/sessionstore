@@ -31,17 +31,6 @@ go sessionStore.ExpireSessionGoroutine()
 - DriverName(db *sql.DB) string - finds the driver name from database
 - EnableDebug(debug bool) - enables / disables the debug option
 - ExpireSessionGoroutine() error - deletes the expired session keys
-- Delete(sessionKey string, options SessionOptions) (bool, error)  - Delete deletes a session
-- Extend(sessionKey string, seconds int64, options SessionOptions) error  - Extends a session
-- FindByKey(sessionKey string, options SessionOptions) (*Session, error) - FindByKey finds a session by key
-- Get(sessionKey string, valueDefault string, options SessionOptions) (string, error) - Gets the session value as a string
-- GetAny(key string, valueDefault any, options SessionOptions) (any, error) - attempts to parse the value as interface, use with SetAny
-- GetMap(key string, valueDefault map[string]any, options SessionOptions) (map[string]any, error) - attempts to parse the value as map[string]any, use with SetMap
-- Has(sessionKey string, options SessionOptions) (bool, error) - Checks if a session by key exists
-- Set(sessionKey string, value string, seconds int64, options SessionOptions) error - Set sets a key in store
-- SetAny(key string, value any, seconds int64, options SessionOptions) error - convenience method which saves the supplied interface value, use GetAny to extract
-- MergeMap(key string, mergeMap map[string]any, seconds int64, options SessionOptions) error - updates an existing map
-- SetMap(key string, value map[string]any, seconds int64, options SessionOptions) error - convenience method which saves the supplied map, use GetMap to extract
 
 ## Usage
 
@@ -49,77 +38,28 @@ go sessionStore.ExpireSessionGoroutine()
 sessionKey  := "ABCDEFG"
 sessionExpireSeconds = 2*60*60
 
+session := NewSession().
+  SetKey(sessionKey).
+  SetValue(sessionValue).
+  SetUserID(userID).
+  SetUserAgent(r.UserAgent()).
+  SetIPAddress(r.RemoteAddr).
+  SetExpiresAt(expiresAt)
+
 // Create new / update existing session
-sessionStore.Set(sessionKey, sessionValue, sessionExpireSeconds, SessionOptions{
-  UserAgent: r.UserAgent(),
-	IPAddress: r.RemoteAddr,
-})
+err := sessionStore.SessionCreate(session)
 
 // Get session value, or default if not found
-value := sessionStore.Get(sessionKey, defaultValue, SessionOptions{
-  UserAgent: r.UserAgent(),
-	IPAddress: r.RemoteAddr,
-})
+session, err := sessionStore.SessionFindByKey(sessionKey)
 
 // Delete session
-isDeleted, err := sessionStore.Delete(sessionKey, SessionOptions{
-  UserAgent: r.UserAgent(),
-	IPAddress: r.RemoteAddr,
-})
+err := sessionStore.SessionDeleteByKey(sessionKey)
 ```
-
-
-
-```go
-// Store interface value
-sessionStore.SetAny(sessionKey, sessionValue, sessionExpireSeconds, SessionOptions{
-  UserAgent: r.UserAgent(),
-	IPAddress: r.RemoteAddr,
-})
-
-// Get interface value
-value := sessionStore.GetAny(sessionKey, defaultValue, SessionOptions{
-  UserAgent: r.UserAgent(),
-	IPAddress: r.RemoteAddr,
-})
-
-
-
-// Example
-value := map[string]string{
-  "key1": "value1",
-  "key2": "value2",
-  "key3": "value3",
-}
-isSaved, err := store.SetJSON("mykey", value, 5*60, SessionOptions{
-  UserAgent: r.UserAgent(),
-	IPAddress: r.RemoteAddr,
-})
-
-if !isSaved {
-  log.Fatal("Set failed: " + err.Error())
-}
-
-result, err := store.GetJSON("mykey", "{}", SessionOptions{
-  UserAgent: r.UserAgent(),
-	IPAddress: r.RemoteAddr,
-})
-
-if err != nil {
-  log.Fatal("Get failed: " + err.Error())
-}
-
-var res = map[string]string{}
-for k, v := range result.(map[string]interface{}) {
-  res[k] = v.(string)
-}
-
-log.Println(res["key1"])
-```
-
 
 
 ## Changelog
+
+2024.12.11 - Removed old API
 
 2024.09.08 - Added options (UserID, UserAgent, IPAddress)
 

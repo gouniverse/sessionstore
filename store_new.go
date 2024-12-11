@@ -3,6 +3,7 @@ package sessionstore
 import (
 	"database/sql"
 	"errors"
+	"log/slog"
 
 	"github.com/gouniverse/sb"
 )
@@ -15,6 +16,7 @@ type NewStoreOptions struct {
 	TimeoutSeconds     int64
 	AutomigrateEnabled bool
 	DebugEnabled       bool
+	SqlLogger          *slog.Logger
 }
 
 // NewStore creates a new session store
@@ -25,6 +27,8 @@ func NewStore(opts NewStoreOptions) (*store, error) {
 		db:                 opts.DB,
 		dbDriverName:       opts.DbDriverName,
 		debugEnabled:       opts.DebugEnabled,
+		timeoutSeconds:     opts.TimeoutSeconds,
+		sqlLogger:          opts.SqlLogger,
 	}
 
 	if store.sessionTableName == "" {
@@ -39,7 +43,13 @@ func NewStore(opts NewStoreOptions) (*store, error) {
 		store.dbDriverName = sb.DatabaseDriverName(store.db)
 	}
 
-	store.timeoutSeconds = 2 * 60 * 60 // 2 hours
+	if store.sqlLogger == nil {
+		store.sqlLogger = slog.Default()
+	}
+
+	if store.timeoutSeconds <= 0 {
+		store.timeoutSeconds = 2 * 60 * 60 // 2 hours
+	}
 
 	if store.automigrateEnabled {
 		store.AutoMigrate()

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -35,6 +36,7 @@ type store struct {
 	timeoutSeconds     int64
 	automigrateEnabled bool
 	debugEnabled       bool
+	sqlLogger          *slog.Logger
 }
 
 // PUBLIC METHODS ============================================================
@@ -65,7 +67,7 @@ func (st *store) EnableDebug(debug bool) {
 	st.debugEnabled = debug
 }
 
-// ExpireSessionGoroutine - soft deletes expired cache
+// ExpireSessionGoroutine - soft deletes expired sessions
 func (st *store) ExpireSessionGoroutine() error {
 	i := 0
 	for {
@@ -396,9 +398,7 @@ func (st *store) SessionCreate(session SessionInterface) error {
 		return sqlErr
 	}
 
-	if st.debugEnabled {
-		log.Println(sqlStr)
-	}
+	st.logSql("create", sqlStr, sqlParams)
 
 	_, err := st.db.Exec(sqlStr, sqlParams...)
 
@@ -429,16 +429,37 @@ func (store *store) SessionDeleteByID(id string) error {
 	sqlStr, params, errSql := goqu.Dialect(store.dbDriverName).
 		Delete(store.sessionTableName).
 		Prepared(true).
-		Where(goqu.C("id").Eq(id)).
+		Where(goqu.C(COLUMN_ID).Eq(id)).
 		ToSQL()
 
 	if errSql != nil {
 		return errSql
 	}
 
-	if store.debugEnabled {
-		log.Println(sqlStr)
+	store.logSql("delete", sqlStr, params...)
+
+	_, err := store.db.Exec(sqlStr, params...)
+
+	return err
+}
+
+// SessionDeleteByID deletes a session by id
+func (store *store) SessionDeleteByKey(sessionKey string) error {
+	if sessionKey == "" {
+		return errors.New("session id is empty")
 	}
+
+	sqlStr, params, errSql := goqu.Dialect(store.dbDriverName).
+		Delete(store.sessionTableName).
+		Prepared(true).
+		Where(goqu.C(COLUMN_SESSION_KEY).Eq(sessionKey)).
+		ToSQL()
+
+	if errSql != nil {
+		return errSql
+	}
+
+	store.logSql("delete", sqlStr, params...)
 
 	_, err := store.db.Exec(sqlStr, params...)
 
@@ -454,14 +475,7 @@ func (store *store) SessionFindByID(sessionID string) (SessionInterface, error) 
 	query := SessionQuery().
 		SetID(sessionID).
 		SetExpiresAtGte(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC)).
-		// SetUserAgent(options.UserAgent).
-		// SetUserIpAddress(options.IPAddress).
 		SetLimit(1)
-
-	// Only add the UserID, if specifically requested
-	// if len(options.UserID) > 0 {
-	// 	query.SetUserID(options.UserID)
-	// }
 
 	list, err := store.SessionList(query)
 
@@ -485,14 +499,7 @@ func (store *store) SessionFindByKey(sessionKey string) (SessionInterface, error
 	query := SessionQuery().
 		SetKey(sessionKey).
 		SetExpiresAtGte(carbon.Now(carbon.UTC).ToDateTimeString(carbon.UTC)).
-		// SetUserAgent(options.UserAgent).
-		// SetUserIpAddress(options.IPAddress).
 		SetLimit(1)
-
-	// Only add the UserID, if specifically requested
-	// if len(options.UserID) > 0 {
-	// 	query.SetUserID(options.UserID)
-	// }
 
 	list, err := store.SessionList(query)
 
@@ -524,9 +531,7 @@ func (store *store) SessionList(query SessionQueryInterface) ([]SessionInterface
 		return []SessionInterface{}, nil
 	}
 
-	if store.debugEnabled {
-		log.Println(sqlStr)
-	}
+	store.logSql("list", sqlStr, sqlParams...)
 
 	if store.db == nil {
 		return []SessionInterface{}, errors.New("userstore: database is nil")
@@ -623,9 +628,7 @@ func (store *store) SessionUpdate(session SessionInterface) error {
 		return sqlErr
 	}
 
-	if store.debugEnabled {
-		log.Println(sqlStr)
-	}
+	store.logSql("update", sqlStr, sqlParams...)
 
 	_, err := store.db.Exec(sqlStr, sqlParams...)
 
@@ -636,7 +639,7 @@ func (store *store) SessionUpdate(session SessionInterface) error {
 	return nil
 }
 
-// Set sets a key in store
+// Deprecated: Set sets a key in store
 func (st *store) Set(sessionKey string, value string, seconds int64, options SessionOptions) error {
 	session, errFindByKey := st.FindByKey(sessionKey, options)
 
@@ -665,7 +668,7 @@ func (st *store) Set(sessionKey string, value string, seconds int64, options Ses
 	}
 }
 
-// SetAny convenience method which saves the supplied interface value, use GetAny to extract
+// Deprecated: SetAny convenience method which saves the supplied interface value, use GetAny to extract
 // Internally it serializes the data to JSON
 func (st *store) SetAny(key string, value interface{}, seconds int64, options SessionOptions) error {
 	jsonValue, jsonError := json.Marshal(value)
@@ -676,7 +679,7 @@ func (st *store) SetAny(key string, value interface{}, seconds int64, options Se
 	return st.Set(key, string(jsonValue), seconds, options)
 }
 
-// SetMap convenience method which saves the supplied map, use GetMap to extract
+// Deprecated: SetMap convenience method which saves the supplied map, use GetMap to extract
 func (st *store) SetMap(key string, value map[string]any, seconds int64, options SessionOptions) error {
 	jsonValue, jsonError := json.Marshal(value)
 	if jsonError != nil {
@@ -780,4 +783,14 @@ func (store *store) sessionSelectQuery(options SessionQueryInterface) (selectDat
 		Gt(carbon.Now(carbon.UTC).ToDateTimeString())
 
 	return q.Where(softDeleted), columns, nil
+}
+
+func (store *store) logSql(sqlOperationType string, sql string, params ...interface{}) {
+	if !store.debugEnabled {
+		return
+	}
+
+	if store.sqlLogger != nil {
+		store.sqlLogger.Debug("sql: "+sqlOperationType, slog.String("sql", sql), slog.Any("params", params))
+	}
 }
