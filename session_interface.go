@@ -17,36 +17,36 @@ type SessionInterface interface {
 	// Setters and Getters
 
 	GetID() string
-	SetID(ID string) *Session
+	SetID(id string) SessionInterface
 
 	GetKey() string
-	SetKey(Key string) *Session
+	SetKey(key string) SessionInterface
 
 	GetUserID() string
-	SetUserID(UserID string) *Session
+	SetUserID(userID string) SessionInterface
 
 	GetIPAddress() string
-	SetIPAddress(IPAddress string) *Session
+	SetIPAddress(ipAddress string) SessionInterface
 
 	GetUserAgent() string
-	SetUserAgent(UserAgent string) *Session
+	SetUserAgent(userAgent string) SessionInterface
 
 	GetValue() string
-	SetValue(Value string) *Session
+	SetValue(value string) SessionInterface
 
 	GetExpiresAt() string
 	GetExpiresAtCarbon() carbon.Carbon
-	SetExpiresAt(ExpiresAt string) *Session
+	SetExpiresAt(expiresAt string) SessionInterface
 
 	GetCreatedAt() string
 	GetCreatedAtCarbon() carbon.Carbon
-	SetCreatedAt(createdAt string) *Session
+	SetCreatedAt(createdAt string) SessionInterface
 
 	GetUpdatedAt() string
 	GetUpdatedAtCarbon() carbon.Carbon
-	SetUpdatedAt(updatedAt string) *Session
+	SetUpdatedAt(updatedAt string) SessionInterface
 
 	GetSoftDeletedAt() string
 	GetSoftDeletedAtCarbon() carbon.Carbon
-	SetSoftDeletedAt(deletedAt string) *Session
+	SetSoftDeletedAt(deletedAt string) SessionInterface
 }

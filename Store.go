@@ -23,12 +23,12 @@ import (
 
 // == INTERFACE ===============================================================
 
-var _ StoreInterface = (*Store)(nil) // verify it extends the task interface
+var _ StoreInterface = (*store)(nil) // verify it extends the task interface
 
 // == TYPE ====================================================================
 
 // Store defines a session store
-type Store struct {
+type store struct {
 	sessionTableName   string
 	db                 *sql.DB
 	dbDriverName       string
@@ -37,51 +37,10 @@ type Store struct {
 	debugEnabled       bool
 }
 
-// NewStoreOptions define the options for creating a new session store
-type NewStoreOptions struct {
-	SessionTableName   string
-	DB                 *sql.DB
-	DbDriverName       string
-	TimeoutSeconds     int64
-	AutomigrateEnabled bool
-	DebugEnabled       bool
-}
-
-// NewStore creates a new session store
-func NewStore(opts NewStoreOptions) (*Store, error) {
-	store := &Store{
-		sessionTableName:   opts.SessionTableName,
-		automigrateEnabled: opts.AutomigrateEnabled,
-		db:                 opts.DB,
-		dbDriverName:       opts.DbDriverName,
-		debugEnabled:       opts.DebugEnabled,
-	}
-
-	if store.sessionTableName == "" {
-		return nil, errors.New("session store: sessionTableName is required")
-	}
-
-	if store.db == nil {
-		return nil, errors.New("session store: DB is required")
-	}
-
-	if store.dbDriverName == "" {
-		store.dbDriverName = sb.DatabaseDriverName(store.db)
-	}
-
-	store.timeoutSeconds = 2 * 60 * 60 // 2 hours
-
-	if store.automigrateEnabled {
-		store.AutoMigrate()
-	}
-
-	return store, nil
-}
-
 // PUBLIC METHODS ============================================================
 
 // AutoMigrate auto migrate
-func (store *Store) AutoMigrate() error {
+func (store *store) AutoMigrate() error {
 	sqlStr := store.SQLCreateTable()
 
 	if sqlStr == "" {
@@ -102,12 +61,12 @@ func (store *Store) AutoMigrate() error {
 }
 
 // EnableDebug - enables the debug option
-func (st *Store) EnableDebug(debug bool) {
+func (st *store) EnableDebug(debug bool) {
 	st.debugEnabled = debug
 }
 
 // ExpireSessionGoroutine - soft deletes expired cache
-func (st *Store) ExpireSessionGoroutine() error {
+func (st *store) ExpireSessionGoroutine() error {
 	i := 0
 	for {
 		i++
@@ -151,7 +110,7 @@ func (st *Store) ExpireSessionGoroutine() error {
 	}
 }
 
-func (store *Store) Extend(sessionKey string, seconds int64, options SessionOptions) error {
+func (store *store) Extend(sessionKey string, seconds int64, options SessionOptions) error {
 	session, errFindByKey := store.FindByKey(sessionKey, options)
 
 	if errFindByKey != nil {
@@ -176,7 +135,7 @@ func (store *Store) Extend(sessionKey string, seconds int64, options SessionOpti
 }
 
 // Delete deletes a session
-func (st *Store) Delete(sessionKey string, options SessionOptions) error {
+func (st *store) Delete(sessionKey string, options SessionOptions) error {
 	wheres := []goqu.Expression{
 		goqu.C(COLUMN_SESSION_KEY).Eq(sessionKey),
 		goqu.C(COLUMN_USER_AGENT).Eq(options.UserAgent),
@@ -222,7 +181,7 @@ func (st *Store) Delete(sessionKey string, options SessionOptions) error {
 }
 
 // FindByKey finds a session by key
-func (store *Store) FindByKey(sessionKey string, options SessionOptions) (SessionInterface, error) {
+func (store *store) FindByKey(sessionKey string, options SessionOptions) (SessionInterface, error) {
 	if sessionKey == "" {
 		return nil, errors.New("session store > find by key: session key is required")
 	}
@@ -253,7 +212,7 @@ func (store *Store) FindByKey(sessionKey string, options SessionOptions) (Sessio
 }
 
 // Gets the session value as a string
-func (st *Store) Get(sessionKey string, valueDefault string, options SessionOptions) (string, error) {
+func (st *store) Get(sessionKey string, valueDefault string, options SessionOptions) (string, error) {
 	session, errFindByKey := st.FindByKey(sessionKey, options)
 
 	if errFindByKey != nil {
@@ -268,7 +227,7 @@ func (st *Store) Get(sessionKey string, valueDefault string, options SessionOpti
 }
 
 // GetAny attempts to parse the value as interface, use with SetAny
-func (st *Store) GetAny(key string, valueDefault interface{}, options SessionOptions) (interface{}, error) {
+func (st *store) GetAny(key string, valueDefault interface{}, options SessionOptions) (interface{}, error) {
 	session, errFindByKey := st.FindByKey(key, options)
 
 	if errFindByKey != nil {
@@ -290,7 +249,7 @@ func (st *Store) GetAny(key string, valueDefault interface{}, options SessionOpt
 }
 
 // GetMap attempts to parse the value as map[string]any, use with SetMap
-func (st *Store) GetMap(key string, valueDefault map[string]any, options SessionOptions) (map[string]any, error) {
+func (st *store) GetMap(key string, valueDefault map[string]any, options SessionOptions) (map[string]any, error) {
 	session, errFindByKey := st.FindByKey(key, options)
 
 	if errFindByKey != nil {
@@ -312,7 +271,7 @@ func (st *Store) GetMap(key string, valueDefault map[string]any, options Session
 }
 
 // Has finds if a session by key exists
-func (store *Store) Has(sessionKey string, options SessionOptions) (bool, error) {
+func (store *store) Has(sessionKey string, options SessionOptions) (bool, error) {
 	if sessionKey == "" {
 		return false, errors.New("session store > find by key: session key is required")
 	}
@@ -338,7 +297,7 @@ func (store *Store) Has(sessionKey string, options SessionOptions) (bool, error)
 	return count > 0, nil
 }
 
-func (st *Store) MergeMap(key string, mergeMap map[string]any, seconds int64, options SessionOptions) error {
+func (st *store) MergeMap(key string, mergeMap map[string]any, seconds int64, options SessionOptions) error {
 	currentMap, err := st.GetMap(key, nil, options)
 
 	if err != nil {
@@ -356,7 +315,7 @@ func (st *Store) MergeMap(key string, mergeMap map[string]any, seconds int64, op
 	return st.SetMap(key, currentMap, seconds, options)
 }
 
-func (store *Store) SessionCount(options SessionQueryInterface) (int64, error) {
+func (store *store) SessionCount(options SessionQueryInterface) (int64, error) {
 	options.SetCountOnly(true)
 
 	q, _, err := store.sessionSelectQuery(options)
@@ -400,7 +359,7 @@ func (store *Store) SessionCount(options SessionQueryInterface) (int64, error) {
 	return i, nil
 }
 
-func (st *Store) SessionCreate(session SessionInterface) error {
+func (st *store) SessionCreate(session SessionInterface) error {
 	if session == nil {
 		return errors.New("sessionstore > session create. session cannot be nil")
 	}
@@ -453,7 +412,7 @@ func (st *Store) SessionCreate(session SessionInterface) error {
 }
 
 // SessionDelete deletes a session
-func (store *Store) SessionDelete(session SessionInterface) error {
+func (store *store) SessionDelete(session SessionInterface) error {
 	if session == nil {
 		return errors.New("session is nil")
 	}
@@ -462,7 +421,7 @@ func (store *Store) SessionDelete(session SessionInterface) error {
 }
 
 // SessionDeleteByID deletes a session by id
-func (store *Store) SessionDeleteByID(id string) error {
+func (store *store) SessionDeleteByID(id string) error {
 	if id == "" {
 		return errors.New("session id is empty")
 	}
@@ -487,7 +446,7 @@ func (store *Store) SessionDeleteByID(id string) error {
 }
 
 // SessionFindByID finds a session by id
-func (store *Store) SessionFindByID(sessionID string) (SessionInterface, error) {
+func (store *store) SessionFindByID(sessionID string) (SessionInterface, error) {
 	if sessionID == "" {
 		return nil, errors.New("session store > find by id: session id is required")
 	}
@@ -518,7 +477,7 @@ func (store *Store) SessionFindByID(sessionID string) (SessionInterface, error) 
 }
 
 // SessionFindByKey finds a session by key
-func (store *Store) SessionFindByKey(sessionKey string) (SessionInterface, error) {
+func (store *store) SessionFindByKey(sessionKey string) (SessionInterface, error) {
 	if sessionKey == "" {
 		return nil, errors.New("session store > find by key: session key is required")
 	}
@@ -548,7 +507,7 @@ func (store *Store) SessionFindByKey(sessionKey string) (SessionInterface, error
 	return nil, nil
 }
 
-func (store *Store) SessionList(query SessionQueryInterface) ([]SessionInterface, error) {
+func (store *store) SessionList(query SessionQueryInterface) ([]SessionInterface, error) {
 	if query == nil {
 		return []SessionInterface{}, errors.New("at session list > session query is nil")
 	}
@@ -595,7 +554,7 @@ func (store *Store) SessionList(query SessionQueryInterface) ([]SessionInterface
 	return list, nil
 }
 
-func (store *Store) SessionSoftDelete(session SessionInterface) error {
+func (store *store) SessionSoftDelete(session SessionInterface) error {
 	if session == nil {
 		return errors.New("session is nil")
 	}
@@ -605,7 +564,7 @@ func (store *Store) SessionSoftDelete(session SessionInterface) error {
 	return store.SessionUpdate(session)
 }
 
-func (store *Store) SessionSoftDeleteByID(id string) error {
+func (store *store) SessionSoftDeleteByID(id string) error {
 	session, err := store.SessionFindByID(id)
 
 	if err != nil {
@@ -615,7 +574,7 @@ func (store *Store) SessionSoftDeleteByID(id string) error {
 	return store.SessionSoftDelete(session)
 }
 
-func (store *Store) SessionUpdate(session SessionInterface) error {
+func (store *store) SessionUpdate(session SessionInterface) error {
 	if session == nil {
 		return errors.New("sessionstore > session update. session cannot be nil")
 	}
@@ -678,7 +637,7 @@ func (store *Store) SessionUpdate(session SessionInterface) error {
 }
 
 // Set sets a key in store
-func (st *Store) Set(sessionKey string, value string, seconds int64, options SessionOptions) error {
+func (st *store) Set(sessionKey string, value string, seconds int64, options SessionOptions) error {
 	session, errFindByKey := st.FindByKey(sessionKey, options)
 
 	if errFindByKey != nil {
@@ -708,7 +667,7 @@ func (st *Store) Set(sessionKey string, value string, seconds int64, options Ses
 
 // SetAny convenience method which saves the supplied interface value, use GetAny to extract
 // Internally it serializes the data to JSON
-func (st *Store) SetAny(key string, value interface{}, seconds int64, options SessionOptions) error {
+func (st *store) SetAny(key string, value interface{}, seconds int64, options SessionOptions) error {
 	jsonValue, jsonError := json.Marshal(value)
 	if jsonError != nil {
 		return jsonError
@@ -718,7 +677,7 @@ func (st *Store) SetAny(key string, value interface{}, seconds int64, options Se
 }
 
 // SetMap convenience method which saves the supplied map, use GetMap to extract
-func (st *Store) SetMap(key string, value map[string]any, seconds int64, options SessionOptions) error {
+func (st *store) SetMap(key string, value map[string]any, seconds int64, options SessionOptions) error {
 	jsonValue, jsonError := json.Marshal(value)
 	if jsonError != nil {
 		return jsonError
@@ -727,7 +686,7 @@ func (st *Store) SetMap(key string, value map[string]any, seconds int64, options
 	return st.Set(key, string(jsonValue), seconds, options)
 }
 
-func (store *Store) sessionSelectQuery(options SessionQueryInterface) (selectDataset *goqu.SelectDataset, columns []any, err error) {
+func (store *store) sessionSelectQuery(options SessionQueryInterface) (selectDataset *goqu.SelectDataset, columns []any, err error) {
 	if options == nil {
 		return nil, []any{}, errors.New("session query: cannot be nil")
 	}

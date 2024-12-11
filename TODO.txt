@@ -1,3 +1,4 @@
 # TODO
 
 - https://github.com/jmptrader/flotilla/tree/master/session
+- https://github.com/golangcollege/sessions
