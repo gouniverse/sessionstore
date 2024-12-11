@@ -22,7 +22,7 @@ sessionStore = sessionstore.NewStore(sessionstore.NewStoreOptions{
 	DebugEnabled:       false,
 })
 
-go sessionStore.ExpireSessionGoroutine()
+go sessionStore.SessionExpiryGoroutine()
 ```
 
 ## Methods
@@ -30,7 +30,7 @@ go sessionStore.ExpireSessionGoroutine()
 - AutoMigrate() error - automigrate (creates) the session table
 - DriverName(db *sql.DB) string - finds the driver name from database
 - EnableDebug(debug bool) - enables / disables the debug option
-- ExpireSessionGoroutine() error - deletes the expired session keys
+- SessionExpiryGoroutine() error - deletes the expired session keys
 
 ## Usage
 
