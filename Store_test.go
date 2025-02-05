@@ -77,7 +77,7 @@ func TestStore_Automigrate(t *testing.T) {
 	err = store.AutoMigrate()
 
 	if err != nil {
-		t.Fatalf("Automigrate failed: " + err.Error())
+		t.Fatal("Automigrate failed: " + err.Error())
 	}
 }
 
@@ -121,7 +121,7 @@ func TestStore_EnableDebug(t *testing.T) {
 	err = store.AutoMigrate()
 
 	if err != nil {
-		t.Fatalf("Automigrate failed: " + err.Error())
+		t.Fatal("Automigrate failed: " + err.Error())
 	}
 }
 
@@ -579,6 +579,89 @@ func TestStore_SessionDeleteByID(t *testing.T) {
 
 	if len(sessionFindWithDeleted) != 0 {
 		t.Fatal("Session MUST be deleted, but it is not")
+	}
+}
+
+func TestStore_SessionExtend(t *testing.T) {
+	store, err := initStore(":memory:")
+
+	if err != nil {
+		t.Fatal("Store could not be created: ", err.Error())
+	}
+
+	session := NewSession().
+		SetValue("one two three four")
+
+	if session == nil {
+		t.Fatal("unexpected nil session")
+	}
+
+	if session.GetID() == "" {
+		t.Fatal("unexpected empty id:", session.GetID())
+	}
+
+	err = store.SessionCreate(session)
+
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	if session.GetExpiresAt() == "" {
+		t.Fatal("unexpected empty expiresAt:", session.GetExpiresAt())
+	}
+
+	newExpiresAt := session.GetExpiresAtCarbon().AddSeconds(100)
+
+	if session.GetExpiresAtCarbon().Gte(newExpiresAt) {
+		t.Fatal("session expiresAt must be less than new expiresAt:", newExpiresAt, " but is: ", session.GetExpiresAtCarbon())
+	}
+
+	err = store.SessionExtend(session, 100)
+
+	if err != nil {
+		t.Error("unexpected error:", err)
+	}
+
+	sessionExtended, errFind := store.SessionFindByID(session.GetID())
+
+	if errFind != nil {
+		t.Fatal("unexpected error:", errFind)
+	}
+
+	if sessionExtended == nil {
+		t.Fatal("Session MUST NOT be nil")
+	}
+
+	if sessionExtended.GetID() != session.GetID() {
+		t.Fatal("IDs do not match")
+	}
+
+	if sessionExtended.GetValue() != session.GetValue() {
+		t.Fatal("Values do not match")
+	}
+
+	if sessionExtended.GetValue() != "one two three four" {
+		t.Fatal("Values do not match")
+	}
+
+	if sessionExtended.GetExpiresAt() == "" {
+		t.Fatal("unexpected empty expiresAt:", session.GetExpiresAt())
+	}
+
+	if sessionExtended.GetExpiresAt() == session.GetExpiresAt() {
+		t.Fatal("unexpected same expiresAt:", session.GetExpiresAt())
+	}
+
+	if sessionExtended.GetExpiresAt() == sessionExtended.GetCreatedAt() {
+		t.Fatal("unexpected same expiresAt:", session.GetExpiresAt())
+	}
+
+	if sessionExtended.GetExpiresAt() == sessionExtended.GetUpdatedAt() {
+		t.Fatal("unexpected same expiresAt:", session.GetExpiresAt())
+	}
+
+	if sessionExtended.GetExpiresAtCarbon().Gte(newExpiresAt) {
+		t.Fatal("expiresAt must be more than or equal to:", newExpiresAt, " but is: ", sessionExtended.GetExpiresAtCarbon())
 	}
 }
 

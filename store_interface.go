@@ -21,6 +21,7 @@ type StoreInterface interface {
 	SessionCreate(session SessionInterface) error
 	SessionDelete(session SessionInterface) error
 	SessionDeleteByID(sessionID string) error
+	SessionExtend(session SessionInterface, seconds int64) error
 	SessionFindByID(sessionID string) (SessionInterface, error)
 	SessionFindByKey(sessionKey string) (SessionInterface, error)
 	SessionList(query SessionQueryInterface) ([]SessionInterface, error)

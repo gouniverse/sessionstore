@@ -466,6 +466,20 @@ func (store *store) SessionDeleteByKey(sessionKey string) error {
 	return err
 }
 
+// SessionExtend extends a session expiry time with the given seconds
+// the new expiry time will be the current time (now) + the given seconds
+func (store *store) SessionExtend(session SessionInterface, seconds int64) error {
+	if session == nil {
+		return errors.New("session is nil")
+	}
+
+	expiresAt := carbon.Now(carbon.UTC).AddSeconds(cast.ToInt(seconds)).ToDateTimeString(carbon.UTC)
+
+	session.SetExpiresAt(expiresAt)
+
+	return store.SessionUpdate(session)
+}
+
 // SessionFindByID finds a session by id
 func (store *store) SessionFindByID(sessionID string) (SessionInterface, error) {
 	if sessionID == "" {
