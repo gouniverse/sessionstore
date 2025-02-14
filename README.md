@@ -70,6 +70,8 @@ err := sessionStore.SessionDeleteByKey(sessionKey)
 
 ## Changelog
 
+2025.01.05 - Added "SessionExtend" method
+
 2024.12.11 - Removed old API, extended interface
 
 2024.09.08 - Added options (UserID, UserAgent, IPAddress)

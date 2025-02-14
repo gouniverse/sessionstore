@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/dromara/carbon/v2"
 	"github.com/gouniverse/sb"
 	"github.com/gouniverse/utils"
 	_ "github.com/mattn/go-sqlite3"
@@ -81,34 +82,6 @@ func TestStore_Automigrate(t *testing.T) {
 	}
 }
 
-// func TestSessionDelete(t *testing.T) {
-// 	store, err := initStore(":memory:")
-
-// 	if err != nil {
-// 		t.Fatal("Store could not be created: ", err.Error())
-// 	}
-
-// 	sessionKey := "SESSION_KEY_DELETE"
-
-// 	store.Set(sessionKey, "123456", 5, SessionOptions{})
-
-// 	err = store.Delete(sessionKey, SessionOptions{})
-
-// 	if err != nil {
-// 		t.Fatalf("Session could not be deleted: " + err.Error())
-// 	}
-
-// 	session, errFind := store.FindByKey(sessionKey, SessionOptions{})
-
-// 	if errFind != nil {
-// 		t.Fatal("Session find error", errFind.Error())
-// 	}
-
-// 	if session != nil {
-// 		t.Fatal("Session should no longer be present")
-// 	}
-// }
-
 func TestStore_EnableDebug(t *testing.T) {
 	store, err := initStore(":memory:")
 
@@ -124,210 +97,6 @@ func TestStore_EnableDebug(t *testing.T) {
 		t.Fatal("Automigrate failed: " + err.Error())
 	}
 }
-
-// func TestSetKey(t *testing.T) {
-// 	store, err := initStore(":memory:")
-
-// 	if err != nil {
-// 		t.Fatal("Store could not be created: ", err.Error())
-// 	}
-
-// 	err = store.Set("hello", "world", 600, SessionOptions{
-// 		UserID:    "123456",
-// 		UserAgent: "UserAgent",
-// 		IPAddress: "127.0.0.1",
-// 	})
-
-// 	if err != nil {
-// 		t.Fatal("Setting key failed:", err.Error())
-// 	}
-
-// 	value, errGet := store.Get("hello", "", SessionOptions{
-// 		UserID:    "123456",
-// 		UserAgent: "UserAgent",
-// 		IPAddress: "127.0.0.1",
-// 	})
-
-// 	if errGet != nil {
-// 		t.Fatal("Getting key failed: ", errGet.Error())
-// 	}
-
-// 	if value != "world" {
-// 		t.Fatal("Incorrect value:", value)
-// 	}
-// }
-
-// func TestUpdateKey(t *testing.T) {
-// 	store, err := initStore(":memory:")
-
-// 	if err != nil {
-// 		t.Fatal("Store could not be created: ", err.Error())
-// 	}
-
-// 	err = store.Set("hello", "world", 1, SessionOptions{
-// 		UserID:    "123456",
-// 		UserAgent: "UserAgent",
-// 		IPAddress: "127.0.0.1",
-// 	})
-
-// 	if err != nil {
-// 		t.Fatalf("Setting key failed: " + err.Error())
-// 	}
-
-// 	session1, errFind := store.FindByKey("hello", SessionOptions{
-// 		UserID:    "123456",
-// 		UserAgent: "UserAgent",
-// 		IPAddress: "127.0.0.1",
-// 	})
-
-// 	if errFind != nil {
-// 		t.Fatal("Session find error", errFind.Error())
-// 	}
-
-// 	if session1 == nil {
-// 		t.Fatal("Session 1 not found")
-// 	}
-
-// 	time.Sleep(2 * time.Second)
-
-// 	err2 := store.Set("hello", "world", 1, SessionOptions{
-// 		UserID:    "123456",
-// 		UserAgent: "UserAgent",
-// 		IPAddress: "127.0.0.1",
-// 	})
-
-// 	if err2 != nil {
-// 		t.Fatalf("Update setting key failed: " + err2.Error())
-// 	}
-
-// 	session2, errFind := store.FindByKey("hello", SessionOptions{
-// 		UserID:    "123456",
-// 		UserAgent: "UserAgent",
-// 		IPAddress: "127.0.0.1",
-// 	})
-
-// 	if errFind != nil {
-// 		t.Fatal("Session find error", errFind.Error())
-// 	}
-
-// 	if session2 == nil {
-// 		t.Fatalf("Session 2 not found")
-// 	}
-
-// 	if session2.GetValue() != "world" {
-// 		t.Fatal("Value not correct:", session2.GetValue())
-// 	}
-
-// 	if session2.GetKey() != "hello" {
-// 		t.Fatal("Key not correct:", session2.GetKey())
-// 	}
-
-// 	if session2.GetUpdatedAt() == session1.GetUpdatedAt() {
-// 		t.Fatal("Updated at should be different from created at date:", session2.GetUpdatedAt())
-// 	}
-
-// 	if session2.GetUpdatedAtCarbon().DiffAbsInSeconds(session1.GetCreatedAtCarbon()) < 1 {
-// 		t.Fatal("Updated at should more than 1 second after created at date:", session2.GetUpdatedAt(), " - ", session1.GetCreatedAt())
-// 	}
-// }
-
-// func TestSetGetAny(t *testing.T) {
-// 	store, err := initStore(":memory:")
-
-// 	if err != nil {
-// 		t.Fatal("Store could not be created: ", err.Error())
-// 	}
-
-// 	value := map[string]string{
-// 		"key1": "value1",
-// 		"key2": "value2",
-// 		"key3": "value3",
-// 	}
-// 	err = store.SetAny("my.key", value, 5, SessionOptions{
-// 		UserID:    "123456",
-// 		UserAgent: "UserAgent",
-// 		IPAddress: "127.0.0.1",
-// 	})
-
-// 	if err != nil {
-// 		t.Fatalf("Set JSON failed: " + err.Error())
-// 	}
-
-// 	result, err := store.GetAny("my.key", "{}", SessionOptions{
-// 		UserID:    "123456",
-// 		UserAgent: "UserAgent",
-// 		IPAddress: "127.0.0.1",
-// 	})
-
-// 	if err != nil {
-// 		t.Fatalf("Get JSON failed: " + err.Error())
-// 	}
-
-// 	t.Log("Result: ", result)
-
-// 	var res = map[string]string{}
-// 	for k, v := range result.(map[string]interface{}) {
-// 		res[k] = v.(string)
-// 	}
-
-// 	if res["key1"] != value["key1"] {
-// 		t.Fatalf("Key1 not correct: " + res["key1"])
-// 	}
-
-// 	if res["key2"] != value["key2"] {
-// 		t.Fatalf("Key2 not correct: " + res["key2"])
-// 	}
-
-// 	if res["key3"] != value["key3"] {
-// 		t.Fatalf("Key3 not correct: " + res["key3"])
-// 	}
-// }
-
-// func TestHas(t *testing.T) {
-// 	store, err := initStore(":memory:")
-
-// 	if err != nil {
-// 		t.Fatal("Store could not be created: ", err.Error())
-// 	}
-
-// 	hasNo, err := store.Has("mykey", SessionOptions{
-// 		UserID:    "123456",
-// 		UserAgent: "UserAgent",
-// 		IPAddress: "127.0.0.1",
-// 	})
-
-// 	if err != nil {
-// 		t.Fatalf("Has no failed: " + err.Error())
-// 	}
-
-// 	if hasNo {
-// 		t.Fatal("Has no failed: ", hasNo)
-// 	}
-
-// 	errSet := store.Set("mykey", "test", 5, SessionOptions{
-// 		UserID:    "123456",
-// 		UserAgent: "UserAgent",
-// 		IPAddress: "127.0.0.1",
-// 	})
-
-// 	if errSet != nil {
-// 		t.Fatalf("Set failed: " + errSet.Error())
-// 	}
-
-// 	has, err := store.Has("mykey", SessionOptions{
-// 		UserID:    "123456",
-// 		UserAgent: "UserAgent",
-// 		IPAddress: "127.0.0.1",
-// 	})
-
-// 	if err != nil {
-// 		t.Fatalf("Has failed: " + err.Error())
-// 	}
-
-// 	if !has {
-// 		t.Fatal("Has failed: ", has)
-// 	}
-// }
 
 // func TestSetGetMap(t *testing.T) {
 // 	store, err := initStore(":memory:")
@@ -662,6 +431,16 @@ func TestStore_SessionExtend(t *testing.T) {
 
 	if sessionExtended.GetExpiresAtCarbon().Gte(newExpiresAt) {
 		t.Fatal("expiresAt must be more than or equal to:", newExpiresAt, " but is: ", sessionExtended.GetExpiresAtCarbon())
+	}
+
+	diff := sessionExtended.GetExpiresAtCarbon().DiffAbsInSeconds(carbon.Now(carbon.UTC))
+
+	if diff < 90 {
+		t.Fatal("Extend failed. ExpiresAt must be more than 90 seconds", sessionExtended.GetExpiresAt(), diff)
+	}
+
+	if diff > 110 {
+		t.Fatal("Extend failed. ExpiresAt must be less than 110 seconds", sessionExtended.GetExpiresAt(), diff)
 	}
 }
 

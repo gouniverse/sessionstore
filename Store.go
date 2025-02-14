@@ -24,7 +24,7 @@ import (
 
 // == INTERFACE ===============================================================
 
-var _ StoreInterface = (*store)(nil) // verify it extends the task interface
+var _ StoreInterface = (*store)(nil) // verify it extends the store interface
 
 // == TYPE ====================================================================
 
