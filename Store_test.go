@@ -1,6 +1,7 @@
 package sessionstore
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"os"
@@ -9,12 +10,11 @@ import (
 
 	"github.com/dromara/carbon/v2"
 	"github.com/gouniverse/sb"
-	"github.com/gouniverse/utils"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func initDB(filepath string) (*sql.DB, error) {
-	if filepath != ":memory:" && utils.FileExists(filepath) {
+	if filepath != ":memory:" && fileExists(filepath) {
 		err := os.Remove(filepath) // remove database
 
 		if err != nil {
@@ -75,7 +75,7 @@ func TestStore_Automigrate(t *testing.T) {
 		t.Fatal("Store could not be created: ", err.Error())
 	}
 
-	err = store.AutoMigrate()
+	err = store.AutoMigrate(context.Background())
 
 	if err != nil {
 		t.Fatal("Automigrate failed: " + err.Error())
@@ -91,7 +91,7 @@ func TestStore_EnableDebug(t *testing.T) {
 
 	store.EnableDebug(true)
 
-	err = store.AutoMigrate()
+	err = store.AutoMigrate(context.Background())
 
 	if err != nil {
 		t.Fatal("Automigrate failed: " + err.Error())
@@ -265,7 +265,7 @@ func TestStore_SessionCreate(t *testing.T) {
 		t.Fatal("unexpected key length:", len(session.GetKey()))
 	}
 
-	err = store.SessionCreate(session)
+	err = store.SessionCreate(context.Background(), session)
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
@@ -281,19 +281,19 @@ func TestStore_SessionDelete(t *testing.T) {
 
 	session := NewSession()
 
-	err = store.SessionCreate(session)
+	err = store.SessionCreate(context.Background(), session)
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
 
-	err = store.SessionDeleteByID(session.GetID())
+	err = store.SessionDeleteByID(context.Background(), session.GetID())
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
 
-	sessionFindWithDeleted, err := store.SessionList(SessionQuery().
+	sessionFindWithDeleted, err := store.SessionList(context.Background(), SessionQuery().
 		SetID(session.GetID()).
 		SetLimit(1).
 		SetSoftDeletedIncluded(true))
@@ -325,19 +325,19 @@ func TestStore_SessionDeleteByID(t *testing.T) {
 		t.Fatal("unexpected empty id:", session.GetID())
 	}
 
-	err = store.SessionCreate(session)
+	err = store.SessionCreate(context.Background(), session)
+
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	err = store.SessionDeleteByID(context.Background(), session.GetID())
 
 	if err != nil {
 		t.Error("unexpected error:", err)
 	}
 
-	err = store.SessionDeleteByID(session.GetID())
-
-	if err != nil {
-		t.Error("unexpected error:", err)
-	}
-
-	sessionFindWithDeleted, err := store.SessionList(SessionQuery().
+	sessionFindWithDeleted, err := store.SessionList(context.Background(), SessionQuery().
 		SetID(session.GetID()).
 		SetLimit(1).
 		SetSoftDeletedIncluded(true))
@@ -369,7 +369,7 @@ func TestStore_SessionExtend(t *testing.T) {
 		t.Fatal("unexpected empty id:", session.GetID())
 	}
 
-	err = store.SessionCreate(session)
+	err = store.SessionCreate(context.Background(), session)
 
 	if err != nil {
 		t.Error("unexpected error:", err)
@@ -385,13 +385,13 @@ func TestStore_SessionExtend(t *testing.T) {
 		t.Fatal("session expiresAt must be less than new expiresAt:", newExpiresAt, " but is: ", session.GetExpiresAtCarbon())
 	}
 
-	err = store.SessionExtend(session, 100)
+	err = store.SessionExtend(context.Background(), session, 100)
 
 	if err != nil {
 		t.Error("unexpected error:", err)
 	}
 
-	sessionExtended, errFind := store.SessionFindByID(session.GetID())
+	sessionExtended, errFind := store.SessionFindByID(context.Background(), session.GetID())
 
 	if errFind != nil {
 		t.Fatal("unexpected error:", errFind)
@@ -462,12 +462,12 @@ func TestStore_SessionFindByID(t *testing.T) {
 		t.Fatal("unexpected empty id:", session.GetID())
 	}
 
-	err = store.SessionCreate(session)
+	err = store.SessionCreate(context.Background(), session)
 	if err != nil {
 		t.Error("unexpected error:", err)
 	}
 
-	sessionFound, errFind := store.SessionFindByID(session.GetID())
+	sessionFound, errFind := store.SessionFindByID(context.Background(), session.GetID())
 
 	if errFind != nil {
 		t.Fatal("unexpected error:", errFind)
@@ -512,12 +512,12 @@ func TestStore_SessionFindByKey(t *testing.T) {
 		t.Fatal("unexpected empty key:", session.GetKey())
 	}
 
-	err = store.SessionCreate(session)
+	err = store.SessionCreate(context.Background(), session)
 	if err != nil {
 		t.Error("unexpected error:", err)
 	}
 
-	sessionFound, errFind := store.SessionFindByKey(session.GetKey())
+	sessionFound, errFind := store.SessionFindByKey(context.Background(), session.GetKey())
 
 	if errFind != nil {
 		t.Fatal("unexpected error:", errFind)
@@ -560,13 +560,13 @@ func TestStore_SessionList(t *testing.T) {
 		SetValue("seven eight nine")
 
 	for _, session := range []SessionInterface{session1, session2, session3} {
-		err = store.SessionCreate(session)
+		err = store.SessionCreate(context.Background(), session)
 		if err != nil {
 			t.Error("unexpected error:", err)
 		}
 	}
 
-	sessionList, errList := store.SessionList(SessionQuery().
+	sessionList, errList := store.SessionList(context.Background(), SessionQuery().
 		SetUserID("2").
 		SetLimit(2))
 
@@ -588,13 +588,13 @@ func TestStore_SessionSoftDelete(t *testing.T) {
 
 	session := NewSession()
 
-	err = store.SessionCreate(session)
+	err = store.SessionCreate(context.Background(), session)
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
 
-	err = store.SessionSoftDeleteByID(session.GetID())
+	err = store.SessionSoftDeleteByID(context.Background(), session.GetID())
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
@@ -604,7 +604,7 @@ func TestStore_SessionSoftDelete(t *testing.T) {
 		t.Fatal("Session MUST NOT be soft deleted")
 	}
 
-	sessionFound, errFind := store.SessionFindByID(session.GetID())
+	sessionFound, errFind := store.SessionFindByID(context.Background(), session.GetID())
 
 	if errFind != nil {
 		t.Fatal("unexpected error:", errFind)
@@ -614,7 +614,7 @@ func TestStore_SessionSoftDelete(t *testing.T) {
 		t.Fatal("Session MUST be nil")
 	}
 
-	sessionFindWithSoftDeleted, err := store.SessionList(SessionQuery().
+	sessionFindWithSoftDeleted, err := store.SessionList(context.Background(), SessionQuery().
 		SetID(session.GetID()).
 		SetSoftDeletedIncluded(true).
 		SetLimit(1))
@@ -645,7 +645,7 @@ func TestStore_SessionUpdate(t *testing.T) {
 
 	session := NewSession()
 
-	err = store.SessionCreate(session)
+	err = store.SessionCreate(context.Background(), session)
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
@@ -657,13 +657,13 @@ func TestStore_SessionUpdate(t *testing.T) {
 		t.Fatal("unexpected error:", err)
 	}
 
-	err = store.SessionUpdate(session)
+	err = store.SessionUpdate(context.Background(), session)
 
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
 
-	sessionFound, errFind := store.SessionFindByID(session.GetID())
+	sessionFound, errFind := store.SessionFindByID(context.Background(), session.GetID())
 
 	if errFind != nil {
 		t.Fatal("unexpected error:", errFind)

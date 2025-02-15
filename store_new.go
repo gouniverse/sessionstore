@@ -1,6 +1,7 @@
 package sessionstore
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"log/slog"
@@ -52,7 +53,7 @@ func NewStore(opts NewStoreOptions) (*store, error) {
 	}
 
 	if store.automigrateEnabled {
-		store.AutoMigrate()
+		store.AutoMigrate(context.Background())
 	}
 
 	return store, nil

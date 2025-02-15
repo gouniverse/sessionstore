@@ -1,20 +1,22 @@
 package sessionstore
 
+import "context"
+
 type StoreInterface interface {
-	AutoMigrate() error
+	AutoMigrate(ctx context.Context) error
 	EnableDebug(debug bool)
 	SessionExpiryGoroutine() error
 
 	// New API
-	SessionCount(query SessionQueryInterface) (int64, error)
-	SessionCreate(session SessionInterface) error
-	SessionDelete(session SessionInterface) error
-	SessionDeleteByID(sessionID string) error
-	SessionExtend(session SessionInterface, seconds int64) error
-	SessionFindByID(sessionID string) (SessionInterface, error)
-	SessionFindByKey(sessionKey string) (SessionInterface, error)
-	SessionList(query SessionQueryInterface) ([]SessionInterface, error)
-	SessionSoftDelete(session SessionInterface) error
-	SessionSoftDeleteByID(sessionID string) error
-	SessionUpdate(session SessionInterface) error
+	SessionCount(ctx context.Context, query SessionQueryInterface) (int64, error)
+	SessionCreate(ctx context.Context, session SessionInterface) error
+	SessionDelete(ctx context.Context, session SessionInterface) error
+	SessionDeleteByID(ctx context.Context, sessionID string) error
+	SessionExtend(ctx context.Context, session SessionInterface, seconds int64) error
+	SessionFindByID(ctx context.Context, sessionID string) (SessionInterface, error)
+	SessionFindByKey(ctx context.Context, sessionKey string) (SessionInterface, error)
+	SessionList(ctx context.Context, query SessionQueryInterface) ([]SessionInterface, error)
+	SessionSoftDelete(ctx context.Context, session SessionInterface) error
+	SessionSoftDeleteByID(ctx context.Context, sessionID string) error
+	SessionUpdate(ctx context.Context, session SessionInterface) error
 }
