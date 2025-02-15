@@ -1,4 +1,5 @@
-# Session Store
+# Session Store <a href="https://gitpod.io/#https://github.com/gouniverse/sessionstore" style="float:right:"><img src="https://gitpod.io/button/open-in-gitpod.svg" alt="Open in Gitpod" loading="lazy"></a>
+
 [![Tests Status](https://github.com/gouniverse/sessionstore/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/gouniverse/sessionstore/actions/workflows/test.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gouniverse/sessionstore)](https://goreportcard.com/report/github.com/gouniverse/sessionstore)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/gouniverse/sessionstore)](https://pkg.go.dev/github.com/gouniverse/sessionstore)
@@ -14,14 +15,14 @@ For commercial use, please use my [contact page](https://lesichkov.co.uk/contact
 ## 🌏  Open in the Cloud 
 Click any of the buttons below to start a new development environment to demo or contribute to the codebase without having to install anything on your machine:
 
-[![Open in VS Code](https://img.shields.io/badge/Open%20in-VS%20Code-blue?logo=visualstudiocode)](https://vscode.dev/github/gouniverse/sessionstore)
+[![Open in VS Code](https://img.shields.io/badge/Open%20in-VS%20Code-blue?logo=vscode)](https://vscode.dev/github/gouniverse/sessionstore)
 [![Open in Glitch](https://img.shields.io/badge/Open%20in-Glitch-blue?logo=glitch)](https://glitch.com/edit/#!/import/github/gouniverse/sessionstore)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/gouniverse/sessionstore)
-[![Edit in Codesandbox](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/github/gouniverse/sessionstore)
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/gouniverse/sessionstore)
-[![Open in Repl.it](https://replit.com/badge/github/withastro/astro)](https://replit.com/github/gouniverse/sessionstore)
-[![Open in Codeanywhere](https://codeanywhere.com/img/open-in-codeanywhere-btn.svg)](https://app.codeanywhere.com/#https://github.com/gouniverse/sessionstore)
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/gouniverse/sessionstore)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=codespaces)](https://codespaces.new/gouniverse/sessionstore)
+[![Edit in Codesandbox](https://img.shields.io/badge/Open%20in-Codesandbox-blue?logo=codesandbox)](https://codesandbox.io/s/github/gouniverse/sessionstore)
+[![Open in StackBlitz](https://img.shields.io/badge/Open%20in-StackBlitz-blue?logo=stackblitz)](https://stackblitz.com/github/gouniverse/sessionstore)
+[![Open in Repl.it](https://img.shields.io/badge/Open%20in-Repl.it-blue?logo=replit)](https://replit.com/github/gouniverse/sessionstore)
+[![Open in Codeanywhere](https://img.shields.io/badge/Open%20in-CodeAnywhere-blue?logo=codeanywhere)](https://app.codeanywhere.com/#https://github.com/gouniverse/sessionstore)
+[![Open in Gitpod](https://img.shields.io/badge/Open%20in-GitPod-blue?logo=gitpod)](https://gitpod.io/#https://github.com/gouniverse/sessionstore)
 
 
 

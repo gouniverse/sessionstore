@@ -5,6 +5,7 @@ go 1.23.3
 require (
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/georgysavva/scany v1.2.2
+	github.com/gouniverse/base v0.7.0
 	github.com/gouniverse/dataobject v0.3.0
 	github.com/gouniverse/strutils v0.7.0
 	github.com/gouniverse/uid v1.5.0
@@ -13,7 +14,6 @@ require (
 
 require (
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gouniverse/base v0.7.0 // indirect
 	github.com/gouniverse/hb v1.83.3 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
