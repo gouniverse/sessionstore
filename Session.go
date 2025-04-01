@@ -69,7 +69,7 @@ func (session *session) GetCreatedAt() string {
 }
 
 // GetCreatedAtCarbon returns the created at time of the session as a carbon object
-func (session *session) GetCreatedAtCarbon() carbon.Carbon {
+func (session *session) GetCreatedAtCarbon() *carbon.Carbon {
 	return carbon.Parse(session.GetCreatedAt(), carbon.UTC)
 }
 
@@ -85,7 +85,7 @@ func (session *session) GetSoftDeletedAt() string {
 }
 
 // GetSoftDeletedAtCarbon returns the soft deleted at time of the session as a carbon object.
-func (session *session) GetSoftDeletedAtCarbon() carbon.Carbon {
+func (session *session) GetSoftDeletedAtCarbon() *carbon.Carbon {
 	return carbon.Parse(session.GetSoftDeletedAt(), carbon.UTC)
 }
 
@@ -101,7 +101,7 @@ func (session *session) GetExpiresAt() string {
 }
 
 // GetExpiresAtCarbon returns the expires at time of the session as a carbon object.
-func (session *session) GetExpiresAtCarbon() carbon.Carbon {
+func (session *session) GetExpiresAtCarbon() *carbon.Carbon {
 	return carbon.Parse(session.GetExpiresAt(), carbon.UTC)
 }
 
@@ -151,7 +151,7 @@ func (session *session) GetUpdatedAt() string {
 }
 
 // GetUpdatedAtCarbon returns the updated at time of the session as a carbon object.
-func (session *session) GetUpdatedAtCarbon() carbon.Carbon {
+func (session *session) GetUpdatedAtCarbon() *carbon.Carbon {
 	return carbon.Parse(session.GetUpdatedAt(), carbon.UTC)
 }
 

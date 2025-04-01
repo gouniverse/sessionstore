@@ -35,18 +35,18 @@ type SessionInterface interface {
 	SetValue(value string) SessionInterface
 
 	GetExpiresAt() string
-	GetExpiresAtCarbon() carbon.Carbon
+	GetExpiresAtCarbon() *carbon.Carbon
 	SetExpiresAt(expiresAt string) SessionInterface
 
 	GetCreatedAt() string
-	GetCreatedAtCarbon() carbon.Carbon
+	GetCreatedAtCarbon() *carbon.Carbon
 	SetCreatedAt(createdAt string) SessionInterface
 
 	GetUpdatedAt() string
-	GetUpdatedAtCarbon() carbon.Carbon
+	GetUpdatedAtCarbon() *carbon.Carbon
 	SetUpdatedAt(updatedAt string) SessionInterface
 
 	GetSoftDeletedAt() string
-	GetSoftDeletedAtCarbon() carbon.Carbon
+	GetSoftDeletedAtCarbon() *carbon.Carbon
 	SetSoftDeletedAt(deletedAt string) SessionInterface
 }
