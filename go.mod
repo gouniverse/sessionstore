@@ -1,4 +1,4 @@
-module github.com/gouniverse/sessionstore
+module github.com/dracory/sessionstore
 
 go 1.23.3
 
