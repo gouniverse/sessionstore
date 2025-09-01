@@ -16,12 +16,16 @@ github.com/denisenkom/go-mssqldb v0.10.0 h1:QykgLZBorFE95+gO3u9esLd0BmbvpWp0/waN
 github.com/denisenkom/go-mssqldb v0.10.0/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
 github.com/doug-martin/goqu/v9 v9.19.0 h1:PD7t1X3tRcUiSdc5TEyOFKujZA5gs3VSA7wxSvBx7qo=
 github.com/doug-martin/goqu/v9 v9.19.0/go.mod h1:nf0Wc2/hV3gYK9LiyqIrzBEVGlI8qW3GuDCEobC4wBQ=
+github.com/dracory/arr v0.1.0 h1:qMY72i7e74nHVYiLv4CfGen1i3FVpzsnTGYFUIfMEyc=
+github.com/dracory/arr v0.1.0/go.mod h1:CWZGRcEKs9+wWxRXF8aCQzwOxGk107fYiUAByTqeMMc=
 github.com/dracory/database v0.3.0 h1:cy5xVMMWZvP6AKAf42UTFESui0kiio2KY0ZmAMu+18s=
 github.com/dracory/database v0.3.0/go.mod h1:Lxt/E19aVgjzo7tuBr7f2johlkh0OMGop3rLmMeqDL4=
 github.com/dracory/dataobject v1.5.0 h1:poTQCSlJs4lnixOEk306LUSEm6TUQam5umDcWPs0oFQ=
 github.com/dracory/dataobject v1.5.0/go.mod h1:YwUjTZSHLTR3IoG9qhJaAholvKYizs6Q41T82BymoAg=
 github.com/dracory/sb v0.11.0 h1:dXGEb+QH573W8qnfw4uBBzBQZNZfAy8VL9S/SzbuxdA=
 github.com/dracory/sb v0.11.0/go.mod h1:wkjUe9gS52De3ryqcwtzT/AfaSvsyT/2YXEPDxF+b2M=
+github.com/dracory/str v0.3.0 h1:4I1a7MGp73WukPVac+cLFh6bA7X5bVLTVSComhUXTr0=
+github.com/dracory/str v0.3.0/go.mod h1:9p5fqokBVw5GEO/CJ2xCmCq1cfjxAiKS2KK7RUFIwRE=
 github.com/dracory/uid v1.7.0 h1:CEi1qQbphJ/dZWaWM8BiVFeBt0QvoJRd/CwN/FesOeE=
 github.com/dracory/uid v1.7.0/go.mod h1:fAj11RGkpDfmpVyEQhGpMuwxoYSaLRhPIVrEdaUt0W0=
 github.com/dromara/carbon/v2 v2.6.11 h1:wnAWZ+sbza1uXw3r05hExNSCaBPFaarWfUvYAX86png=
@@ -47,8 +51,6 @@ github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeN
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/gouniverse/strutils v0.7.0 h1:xz8Ag7SSoAjBntRGfOsrXjT98+4eOB5aivi1F+Xy9SU=
-github.com/gouniverse/strutils v0.7.0/go.mod h1:NfVT8LbENvAT39bFtjuxQLFq6A4wHDJuyqcmsys1o0A=
 github.com/jackc/chunkreader v1.0.0 h1:4s39bBR8ByfqH+DKm8rQA3E1LHZWB9XWcrz8fqaZbe0=
 github.com/jackc/chunkreader v1.0.0/go.mod h1:RT6O25fNZIuasFJRyZ4R/Y2BbhasbmZXF9QQ7T3kePo=
 github.com/jackc/chunkreader/v2 v2.0.0/go.mod h1:odVSm741yZoC3dpHEUXIqA9tQRhFrgOHwnPIn9lDKlk=
@@ -195,8 +197,8 @@ golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPh
 golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2/go.mod h1:T9bdIzuCu7OtxOm1hfPfRQxPLYneinmdGuTeoZ9dtd4=
 golang.org/x/crypto v0.41.0 h1:WKYxWedPGCTVVl5+WHSSrOBT0O8lx32+zxmHxijgXp4=
 golang.org/x/crypto v0.41.0/go.mod h1:pO5AFd7FA68rFak7rOAGVuygIISepHftHnr8dr6+sUc=
-golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 h1:R84qjqJb5nVJMxqWYb3np9L5ZsaDtB+a39EqjV0JSUM=
-golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0/go.mod h1:S9Xr4PYopiDyqSyp5NjCrhFrqg6A5zA2E/iPHPhqnS8=
+golang.org/x/exp v0.0.0-20250718183923-645b1fa84792 h1:R9PFI6EUdfVKgwKjZef7QIwGcBKu86OEFpJ9nUEP2l4=
+golang.org/x/exp v0.0.0-20250718183923-645b1fa84792/go.mod h1:A+z0yzpGtvnG90cToK5n2tu8UJVP2XUATh+r+sfOOOc=
 golang.org/x/lint v0.0.0-20190930215403-16217165b5de/go.mod h1:6SW0HCj/g11FgYtHlgUYUwCkIfeOF89ocIRzGO/8vkc=
 golang.org/x/mod v0.0.0-20190513183733-4bf6d317e70e/go.mod h1:mXi4GBBbnImb6dmsKGUJ2LatrhH/nqhxcFungHvyanc=
 golang.org/x/net v0.0.0-20190311183353-d8887717615a/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=

@@ -3,12 +3,12 @@ package sessionstore
 import (
 	"os"
 
-	"github.com/gouniverse/strutils"
+	"github.com/dracory/str"
 )
 
 func generateSessionKey(keyLength int) string {
 	gamma := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	return strutils.RandomFromGamma(keyLength, gamma)
+	return str.RandomFromGamma(keyLength, gamma)
 }
 
 // fileExists checks if a file exists
