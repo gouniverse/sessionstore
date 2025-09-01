@@ -16,12 +16,12 @@ require (
 require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	golang.org/x/crypto v0.36.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/crypto v0.41.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
 )
 
 require (
-	github.com/dromara/carbon/v2 v2.6.1
-	github.com/samber/lo v1.49.1
+	github.com/dromara/carbon/v2 v2.6.11
+	github.com/samber/lo v1.51.0
 	github.com/spf13/cast v1.9.2
 )
