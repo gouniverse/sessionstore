@@ -2,9 +2,9 @@ package sessionstore
 
 import (
 	"github.com/dracory/dataobject"
+	"github.com/dracory/sb"
 	"github.com/dracory/uid"
 	"github.com/dromara/carbon/v2"
-	"github.com/gouniverse/sb"
 )
 
 var _ SessionInterface = (*session)(nil)

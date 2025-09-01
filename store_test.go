@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/dracory/sb"
 	"github.com/dromara/carbon/v2"
-	"github.com/gouniverse/sb"
 	_ "github.com/mattn/go-sqlite3"
 )
 
